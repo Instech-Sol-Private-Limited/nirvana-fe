@@ -1,0 +1,1 @@
+export { DiscussionForumsView } from "./DiscussionForumsView";

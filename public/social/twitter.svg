@@ -1,0 +1,29 @@
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="akar-icons:twitter-fill" filter="url(#filter0_i_52_512)">
+<g id="Group" filter="url(#filter1_i_52_512)">
+<path id="Vector" d="M14.7494 2.81787H17.1622L11.891 8.84247L18.0921 17.0406H13.2367L9.43378 12.0685L5.08235 17.0406H2.66813L8.30617 10.5966L2.35742 2.81787H7.33611L10.7736 7.36258L14.7494 2.81787ZM13.9026 15.5964H15.2396L6.60965 4.18617H5.17498L13.9026 15.5964Z" fill="#00732E"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_i_52_512" x="0.861084" y="0.657715" width="18.6052" height="22.6055" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="7.5"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0"/>
+<feBlend mode="normal" in2="shape" result="effect1_innerShadow_52_512"/>
+</filter>
+<filter id="filter1_i_52_512" x="2.35742" y="2.81787" width="15.7346" height="18.2227" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="2"/>
+<feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="shape" result="effect1_innerShadow_52_512"/>
+</filter>
+</defs>
+</svg>
