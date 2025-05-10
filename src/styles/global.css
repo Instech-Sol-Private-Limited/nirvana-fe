@@ -1,0 +1,30 @@
+@layer base {
+    body {
+      @apply bg-cyan-50;
+    }
+  }
+  
+  @layer components {
+    /* Add custom component styles here if needed */
+  }
+  
+  @layer utilities {
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+  
+    ::-webkit-scrollbar-track {
+      background-color: theme('colors.gray.900'); /* Use `theme()` in Tailwind v4 */
+    }
+  
+    ::-webkit-scrollbar-thumb {
+      background-color: theme('colors.teal.600');
+      border-radius: 0.25rem; /* You can still use Tailwind rounding here */
+    }
+  
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: theme('colors.teal.500');
+    }
+  }
+  
