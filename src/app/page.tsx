@@ -1,15 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CategoryFilter from '../components/forum/CategoryFilter';
 import ThreadList from '../components/forum/ThreadList';
 import NewThreadCard from '../components/forum/NewThreadCard';
 import TrendingTopics from '../components/forum/TrendingTopics';
-import { categories, threads, trendingTags } from '../utils/data';
-import { ThreadFilter } from '../types';
+import { trendingTags } from '@/constants';
+import { Thread, ThreadFilter } from '../types';
+import { getAllCategories } from '@/utils/categories';
+import { getAllThreads } from '@/utils/threads';
 
 export default function HomePage() {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['React', 'Next.js']);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState([]);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(true);
+  const [threadsLoading, setThreadsLoading] = useState(true);
   const [filter, setFilter] = useState<ThreadFilter>({
     sortBy: 'recent',
     timeRange: 'all'
@@ -27,78 +33,100 @@ export default function HomePage() {
     setFilter({ ...filter, ...newFilter });
   };
 
-  const filteredThreads = threads.filter(thread => 
-    selectedCategories.length === 0 || selectedCategories.includes(thread.category.name)
+  const filteredThreads = threads.filter(thread =>
+    selectedCategories.length === 0 || selectedCategories.includes(thread.category_name)
   );
 
-  // Sort threads based on filter
   const sortedThreads = [...filteredThreads].sort((a, b) => {
     switch (filter.sortBy) {
       case 'recent':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return new Date(b.publish_date).getTime() - new Date(a.publish_date).getTime();
       case 'popular':
-        return b.viewCount - a.viewCount;
-      case 'unanswered':
-        return a.replyCount - b.replyCount;
-      case 'solved':
-        return Number(b.isSolved) - Number(a.isSolved);
+        return b.total_likes - a.total_likes;
+      // case 'unanswered':
+      //   return a.replyCount - b.replyCount;
+      // case 'solved':
+      //   return Number(b.isSolved) - Number(a.isSolved);
       default:
         return 0;
     }
   });
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const response = await getAllCategories();
+      if (response.success) {
+        setCategories(response.data);
+        setCategoryLoading(false)
+      }
+    }
+
+    const fetchThreads = async () => {
+      const response = await getAllThreads(10, 0);
+      if (response.success) {
+        setThreads(response.data);
+        setThreadsLoading(false)
+      }
+    }
+
+    fetchCategories()
+    fetchThreads()
+  }, [])
+
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      <div className="flex-1">
-        <CategoryFilter 
-          categories={categories}
-          selectedCategories={selectedCategories}
-          onToggle={handleCategoryToggle}
-        />
-        
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-white">Discussion Threads</h2>
-          <div className="flex gap-2">
-            <select 
-              className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1 text-sm"
-              value={filter.sortBy}
-              onChange={(e) => handleFilterChange({ sortBy: e.target.value as any })}
-            >
-              <option value="recent">Most Recent</option>
-              <option value="popular">Most Popular</option>
-              <option value="unanswered">Unanswered</option>
-              <option value="solved">Solved</option>
-            </select>
-            <select 
-              className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1 text-sm"
-              value={filter.timeRange}
-              onChange={(e) => handleFilterChange({ timeRange: e.target.value as any })}
-            >
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
-        </div>
-        
-        {/* Using the updated ThreadList component that makes threads clickable */}
-        <ThreadList threads={sortedThreads} />
-      </div>
-      
-      <div className="w-full lg:w-80">
-        <NewThreadCard />
-        
-        <div className="mt-6 bg-gray-900 rounded-lg p-4">
+    <>
+      <div className="w-full flex flex-col md:flex-row gap-6">
+        <div className="w-[calc(100%-320px)] flex-grow ">
+          <CategoryFilter
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onToggle={handleCategoryToggle}
+            isLoading={categoryLoading}
+          />
+
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-white">Trending Topics</h2>
-            <a href="#" className="text-sm text-primary-500 hover:text-primary-400">View All</a>
+            <h2 className="text-xl font-semibold text-white">Discussion Threads</h2>
+            <div className="flex gap-2">
+              <select
+                className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1 text-sm"
+                value={filter.sortBy}
+                onChange={(e) => handleFilterChange({ sortBy: e.target.value as any })}
+              >
+                <option value="recent">Most Recent</option>
+                <option value="popular">Most Popular</option>
+                {/* <option value="unanswered">Unanswered</option>
+              <option value="solved">Solved</option> */}
+              </select>
+              <select
+                className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1 text-sm"
+                value={filter.timeRange}
+                onChange={(e) => handleFilterChange({ timeRange: e.target.value as any })}
+              >
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
           </div>
-          
-          <TrendingTopics tags={trendingTags} />
+
+          <ThreadList threads={sortedThreads} isLoading={threadsLoading} />
+        </div>
+
+        <div className="w-full md:w-80">
+          <NewThreadCard />
+
+          <div className="mt-6 bg-gray-900 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-white">Trending Topics</h2>
+              <button className="cursor-pointer text-sm text-primary-500 hover:text-primary-400">View All</button>
+            </div>
+
+            <TrendingTopics tags={trendingTags} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

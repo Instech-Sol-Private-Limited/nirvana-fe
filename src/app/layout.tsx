@@ -1,17 +1,12 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Poppins } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
-import Sidebar from "@/components/layout/Sidebar";
 import { AuthProvider } from "@/context/AuthProvider";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import "./globals.css";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const poppins = Poppins({
+  variable: "--font-poppins",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   subsets: ["latin"],
 });
 
@@ -27,28 +22,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-cyan-50`}
-      >
+      <body className={`${poppins.variable} bg-cyan-50`}>
         <AuthProvider>
-          <div className="min-h-screen">
-            <div className="">
-              <h1 className="text-2xl font-bold text-gray-800 mb-6">Forum Dashboard</h1>
-
-              <div className="bg-gray-900 overflow-hidden text-gray-100">
-                <Navbar />
-
-                <div className="flex flex-row">
-                  <div className="hidden md:block">
-                    <Sidebar />
-                  </div>
-
-                  <main className="flex-1 p-6">
-                    {children}
-                  </main>
-                </div>
-              </div>
-            </div>
+          <div className="min-h-screen bg-gray-900 overflow-hidden text-gray-100">
+            <Navbar />
+            <main className="flex flex-row flex-1 pt-28 p-6">
+              {children}
+            </main>
           </div>
         </AuthProvider>
       </body>

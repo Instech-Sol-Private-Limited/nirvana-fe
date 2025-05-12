@@ -1,4 +1,4 @@
-import supabase from '../config/supabse';
+import supabase from '@/config/supabse';
 
 type UserRole = 'superadmin' | 'user' | 'guest';
 
@@ -13,49 +13,6 @@ interface UserProfile {
     updated_at: string;
 }
 
-// sign up user
-const signUp = async (
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string
-) => {
-    try {
-        const redirectTo = `${window.location.origin}/auth/verify-email/`;
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { emailRedirectTo: redirectTo },
-        });
-
-        if (error) {
-            return { success: false, message: error.message };
-        }
-
-        const user = data.user;
-
-        if (user) {
-            const response = await supabase.from('profiles').upsert({
-                id: user.id,
-                email: user.email,
-                first_name: firstName,
-                last_name: lastName,
-                role: 'user',
-            });
-
-            if (response.error) {
-                return {
-                    success: false,
-                    message: response.error.message
-                };
-            }
-        }
-
-        return { success: true, message: "User successfully registered!" };
-    } catch (err: any) {
-        return { success: false, message: err.message || "Unexpected error during sign up" };
-    }
-};
 
 // sign in user 
 const signIn = async (email: string, password: string) => {
@@ -123,52 +80,6 @@ const signOut = async () => {
     }
 };
 
-// reset password email
-const sendResetPasswordEmail = async (email: string) => {
-    try {
-        const options = {
-            redirectTo: `${window.location.origin}/auth/verify-email/`
-        };
-        const response = await supabase.auth.resetPasswordForEmail(email, options);
-
-        if (response.error) {
-            return {
-                success: false,
-                message: response.error.message,
-            };
-        }
-        return { success: true, data: response.data };
-    } catch (err: any) {
-        return { success: false, message: err.message || "Unexpected error during password reset email" };
-    }
-};
-
-// reset password
-const resetPassword = async (newPassword: string) => {
-    try {
-        const { data, error } = await supabase.auth.updateUser({ password: newPassword });
-
-        if (error) {
-            return {
-                success: false,
-                message: error.message,
-            };
-        }
-
-        return {
-            success: true,
-            message: 'Password updated successfully!',
-            data,
-        };
-    } catch (err: any) {
-        console.log(err)
-        return {
-            success: false,
-            message: err.message || "Unexpected error during password reset"
-        };
-    }
-};
-
 // get profile
 const getProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
@@ -221,12 +132,9 @@ const onAuthStateChange = (
 };
 
 export {
-    signUp,
     signIn,
     signInWithGoogle,
     signOut,
-    sendResetPasswordEmail,
-    resetPassword,
     getProfile,
     getUser,
     getSession,

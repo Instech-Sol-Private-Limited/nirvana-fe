@@ -11,24 +11,26 @@ export interface User {
     role?: 'admin' | 'moderator' | 'member';
   }
   
-  export interface Thread {
-    id: string;
-    title: string;
-    content: string;
-    author: User;
-    category: Category;
-    tags: string[];
-    createdAt: string;
-    updatedAt: string;
-    viewCount: number;
-    replyCount: number;
-    likeCount: number;
-    isSticky: boolean;
-    isClosed: boolean;
-    isSolved: boolean;
-    images: string[]; // Assuming image URLs or paths as strings
-    lastActivity: string;
-  }
+export interface Thread {
+  id: string;
+  title: string;
+  description: string;
+  imgs: string[];
+  category_name: string;
+  category_id: string;
+  author_name: string;
+  author_id: string;
+  publish_date: string;
+  updated_at: string;
+  total_likes: number;
+  total_dislikes: number;
+  keywords: string[];
+  is_active: boolean;
+  profiles: {
+    avatar_url: string;
+  };
+  replyCount?: number;
+}
   
   export interface Comment {
     id: string;
@@ -60,12 +62,9 @@ export interface User {
 
   export interface Category {
     id: string;
-    name: string;
-    slug: string;
-    description: string;
-    threadCount: number;
-    iconType: 'cube' | 'stripes' | 'dots' | 'document';
-    color: string;
+    category_name: string;
+    category_slug: string;
+    description?: string;
   }
   
   export interface Notification {

@@ -1,4 +1,5 @@
 "use client";
+
 import {
     createContext,
     useContext,
@@ -6,13 +7,12 @@ import {
     useState,
     ReactNode
 } from 'react';
-
 import {
     getSession,
     getUser,
     getProfile,
     onAuthStateChange
-} from '../utils/auth';
+} from '@/utils/auth';
 
 type AuthData = {
     userId: any;
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         accessToken: null,
         role: null
     });
-    console.log(authData)
+
     const [loading, setLoading] = useState<boolean>(true);
 
     const updateAuthData = (partial: Partial<AuthData>) => {
@@ -56,10 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             const session = sessionRes.data;
-           
 
             const userRes = await getUser();
-            //@ts-ignore
+            // @ts-ignore
             const currentUser = userRes.data?.user;
 
             if (!currentUser) {
@@ -68,19 +67,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             const profile = await getProfile(currentUser.id);
-            console.log({
-                userId: currentUser.id,
-                accessToken: session.access_token,
-                role: profile?.role || 'user'
-            })
             setAuthData({
                 userId: currentUser.id,
                 accessToken: session.access_token,
                 role: profile?.role || 'user'
             });
-            if (session.access_token) {
-                localStorage.setItem('accessToken', session.access_token);
-            }
         } catch (error) {
             console.error('Auth error:', error);
             setAuthData({ userId: null, accessToken: null, role: null });
@@ -111,6 +102,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
     }, []);
 
+    useEffect(() => {
+      console.log(authData)
+    }, [authData])
+    
     return (
         <AuthContext.Provider value={{ ...authData, loading, setAuthData }}>
             {children}
