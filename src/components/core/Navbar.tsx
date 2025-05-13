@@ -10,15 +10,16 @@ import { PiUserCircleDashed } from 'react-icons/pi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthProvider';
 import PrimaryButton from '../addons/PrimaryButton';
-import { div } from 'framer-motion/client';
+import { useRouter } from 'next/navigation';
 
 const Navbar: React.FC = () => {
+  const router = useRouter()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const { accessToken, loading } = useAuth();
+  const { accessToken, loading, logout, userData } = useAuth();
 
 
   const placeholders = [
@@ -76,7 +77,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Center - Search Bar */}
-      <div className="flex-1 max-w-2xl md:mx-4 px-2 md:mx-8">
+      <div className="flex-1 max-w-2xl mx-4 px-2 md:mx-8">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <FiSearch className="md:h-5 md:w-5 w-4 h-4 text-gray-400" />
@@ -125,7 +126,7 @@ const Navbar: React.FC = () => {
             </div>
           ) : (
             !accessToken ?
-              <PrimaryButton text={"Sign in"} className='!py-2' />
+              <PrimaryButton text={"Sign in"} onClick={() => router.push("/login")} className='!py-2' />
               : (
                 <button
                   className="flex items-center text-sm rounded-full focus:outline-none transition-transform hover:scale-105 duration-200"
@@ -133,10 +134,10 @@ const Navbar: React.FC = () => {
                 >
                   <div className="md:w-8 md:h-8 w-6 h-6 rounded-full cursor-pointer overflow-hidden bg-gray-700 flex items-center justify-center">
 
-                    {!currentUser.avatar ? (
+                    {userData.avatar_url && userData.first_name ? (
                       <Image
-                        src={currentUser.avatar}
-                        alt={currentUser.username}
+                        src={userData.avatar_url}
+                        alt={userData.first_name}
                         fill
                         className="!relative md:!w-8 md:!h-8 !w-6 !h-6"
                       />
@@ -145,7 +146,6 @@ const Navbar: React.FC = () => {
                     )}
                   </div>
                 </button>
-
               )
           )}
 
@@ -155,13 +155,13 @@ const Navbar: React.FC = () => {
               <div className="py-1" role="menu">
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-gray-700">
-                  <p className="text-sm font-medium text-white">{currentUser.username}</p>
-                  <p className="text-xs text-gray-400 truncate">{currentUser.email}</p>
+                  <p className="text-sm font-medium text-white capitalize">{userData.first_name}{userData.last_name ? ` ${userData.last_name}` : ''}</p>
+                  <p className="text-xs text-gray-400 truncate">{userData.email}</p>
                 </div>
 
                 {/* Menu Items */}
                 <Link
-                  href={`/users/${currentUser.id}`}
+                  href={`/users/${userData.id}`}
                   className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
                 >
                   <FiUser className="mr-3 h-5 w-5 text-gray-400" />
@@ -184,13 +184,15 @@ const Navbar: React.FC = () => {
                   Your Posted Threads
                 </Link>
 
-                <Link
-                  href="/logout"
-                  className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white border-t border-gray-700 transition-colors duration-150"
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false)
+                    logout()
+                  }} className="w-full cursor-pointer flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white border-t border-gray-700 transition-colors duration-150"
                 >
                   <FiLogOut className="mr-3 h-5 w-5 text-gray-400" />
                   Sign out
-                </Link>
+                </button>
               </div>
             </div>
           )}

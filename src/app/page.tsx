@@ -52,23 +52,23 @@ export default function HomePage() {
     }
   });
 
+  const fetchCategories = async () => {
+    const response = await getAllCategories();
+    if (response.success) {
+      setCategories(response.data);
+      setCategoryLoading(false)
+    }
+  }
+
+  const fetchThreads = async () => {
+    const response = await getAllThreads(10, 0);
+    if (response.success) {
+      setThreads(response.data);
+      setThreadsLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      const response = await getAllCategories();
-      if (response.success) {
-        setCategories(response.data);
-        setCategoryLoading(false)
-      }
-    }
-
-    const fetchThreads = async () => {
-      const response = await getAllThreads(10, 0);
-      if (response.success) {
-        setThreads(response.data);
-        setThreadsLoading(false)
-      }
-    }
-
     fetchCategories()
     fetchThreads()
   }, [])
@@ -115,7 +115,7 @@ export default function HomePage() {
         </div>
 
         <div className="w-full md:w-80">
-          <NewThreadCard />
+          <NewThreadCard onNewThread={fetchThreads} />
 
           <div className="mt-6 bg-gray-900 rounded-lg p-4">
             <div className="flex justify-between items-center mb-4">

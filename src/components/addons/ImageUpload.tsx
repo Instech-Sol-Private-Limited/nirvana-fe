@@ -119,7 +119,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 </label>
             )}
 
-            {/* Hide the upload box if max images are uploaded */}
             {previews.length < max && (
                 <div
                     onClick={triggerFileInput}
@@ -163,12 +162,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 </div>
             )}
 
-            {/* Hide error if at least one image is uploaded */}
-            {error && touched && previews.length === 0 && (
+            {/* Error Display */}
+            {touched && error && (
                 <p className="text-red-500 text-sm mt-2">{error}</p>
             )}
 
-            {previews.length > 0 && (
+            {previews?.length > 0 && (
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
                     {previews.map((preview, index) => (
                         <div key={index} className="relative group">
@@ -203,6 +202,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                         required &&
                         ` (${min - previews.length} more required)`}
                 </p>
+            )}
+
+            {/* Error Display */}
+            {touched && error && (
+                <p className="text-red-500 text-sm mt-2">{error}</p>
             )}
         </div>
     );

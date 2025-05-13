@@ -1,12 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import AddThreadModal from '../dialogs/AddThreadModal';
 import PrimaryButton from '../addons/PrimaryButton';
 
-const NewThreadCard: React.FC = () => {
-  const router = useRouter();
+interface NewThreadCardProps {
+    onNewThread: () => void;
+}
+
+const NewThreadCard: React.FC<NewThreadCardProps> = ({ onNewThread }) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -27,7 +29,7 @@ const NewThreadCard: React.FC = () => {
         />
       </div>
 
-      <AddThreadModal isOpen={isOpen} setIsOpen={setIsOpen} />
+      <AddThreadModal isOpen={isOpen} setIsOpen={setIsOpen} onNewThread={onNewThread} />
     </>
   );
 };

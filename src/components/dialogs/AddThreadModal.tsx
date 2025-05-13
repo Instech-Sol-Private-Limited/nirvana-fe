@@ -1,8 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ModalWrapper from '@/components/addons/WrapperModal';
 import { useRouter } from 'next/navigation';
-import { categories } from '@/constants';
-import TextEditor from '../addons/TextEditor';
 import PrimaryButton from '../addons/PrimaryButton';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -16,13 +14,16 @@ import {
 import { getAllCategories } from '@/utils/categories';
 import { Category } from '@/types';
 import { uploadToSupabase } from '@/utils/supabsebucket';
+import { addNewThread } from '@/utils/threads';
+import { toast } from 'react-toastify';
 
 interface AddThreadProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
+    onNewThread: () => void;
 }
 
-const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen }) => {
+const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThread }) => {
     const [categoriesOption, setCategoriesOption] = useState([])
     const router = useRouter();
 
@@ -34,7 +35,9 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen }) => {
             .required('Content is required')
             .min(30, 'Content must be at least 30 characters'),
         category: Yup.string().required('Please select a category'),
-        tags: Yup.array().max(5, 'Maximum 5 tags allowed'),
+        tags: Yup.array()
+            .min(1, 'At least one tag is required')
+            .max(5, 'Maximum 5 tags allowed'),
         images: Yup.array()
             .min(1, 'At least one image is required')
             .max(5, 'Maximum 5 images allowed')
@@ -51,12 +54,38 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen }) => {
             previews: [] as string[]
         },
         validationSchema,
-        onSubmit: async (values) => {
-            console.log(values)
-            const getFileUrl = await uploadToSupabase(values.images[0])
-            console.log(getFileUrl)
-            // router.push(`/threads?created=true`);
-        }
+        onSubmit: async (values, { resetForm, setSubmitting }) => {
+            try {
+                const imageUrls = await Promise.all(
+                    values.images.map((file) => uploadToSupabase(file as File))
+                );
+
+                const updatedValues = {
+                    title: values.title,
+                    description: values.content,
+                    imgs: imageUrls,
+                    category_id: values.category,
+                    keywords: values.tags,
+                };
+
+                const response = await addNewThread(updatedValues);
+
+                if (response.success) {
+                    toast.success('Thread created successfully!');
+                    resetForm();
+                    setIsOpen(false);
+                    onNewThread()
+                } else {
+                    toast.error(response.message || 'Failed to create thread.');
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error('Something went wrong while creating the thread.');
+            } finally {
+                setSubmitting(false);
+            }
+        },
+
     });
 
     const handleAddTag = () => {
@@ -168,11 +197,16 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen }) => {
                         <label htmlFor="content" className="block text-white mb-2 md:text-sm text-xs font-medium">
                             Thread Content
                         </label>
-                        <TextEditor
+                        <textarea
+                            id="content"
+                            className={`w-full p-4 bg-gray-800 text-white rounded-lg border border-gray-700 resize-none transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent hover:border-teal-700 ${formik.touched.content && formik.errors.content ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                            rows={8}
                             value={formik.values.content}
-                            onChange={(value) => formik.setFieldValue('content', value)}
-                            error={formik.touched.content && formik.errors.content}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="What would you like to discuss? Be as detailed as possible."
                         />
+
                         {formik.touched.content && formik.errors.content && (
                             <p className="text-red-500 text-sm mt-2">{formik.errors.content}</p>
                         )}
@@ -262,6 +296,8 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen }) => {
                         <PrimaryButton
                             type="submit"
                             text={'Create Thread'}
+                            className=''
+                            isLoading={formik.isSubmitting}
                             disabled={formik.isSubmitting || !formik.isValid}
                             center={false}
                         />

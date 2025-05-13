@@ -310,7 +310,6 @@ export default function ThreadDetailPage() {
         </div>
       )}
 
-
       {/* Replies/Comments Section */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-6">

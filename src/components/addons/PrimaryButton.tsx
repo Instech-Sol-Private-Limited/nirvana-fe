@@ -35,7 +35,7 @@ const PrimaryButton: React.FC<ButtonProps> = ({
                 disabled={disabled || isLoading}
                 className={`bg-white ${iconPosition === "prefix" ? "flex-row" : "flex-row-reverse"
                     } transition-all duration-500 cursor-pointer lg:text-base md:text-sm text-xs text-teal-700 font-medium hover:bg-teal-50 flex items-center justify-center gap-3 ${className
-                    } ${isLoading ? "opacity-50 cursor-not-allowed !w-fit p-2 rounded-full" : "lg:py-3 py-2 2xl:px-12 lg:px-10 px-8 rounded-lg"}`}
+                    } ${isLoading ? "opacity-50 cursor-not-allowed !w-fit aspect-square p-2 rounded-full" : "lg:py-3 py-2 2xl:px-12 lg:px-10 px-8 rounded-lg"}`}
             >
                 {isLoading ? (
                     <span className="w-6 h-6 rounded-full border-t-2 border-l-2 border-teal-700 animate-spin"></span>

@@ -13,9 +13,7 @@ export const uploadToSupabase = async (file: File) => {
                 upsert: false
             });
 
-
         if (error) throw error;
-
 
         const { data: publicUrlData } = supabase.storage
             .from('blog-images')
@@ -25,9 +23,9 @@ export const uploadToSupabase = async (file: File) => {
             throw new Error('Failed to get public URL for uploaded image');
         }
 
-        console.log('Uploaded Image URL:', publicUrlData.publicUrl);
-
+        return publicUrlData.publicUrl;
     } catch (error: any) {
         console.error('Error uploading image:', error);
     }
 };
+
