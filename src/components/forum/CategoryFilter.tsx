@@ -1,126 +1,116 @@
-// src/components/forum/CategoryFilter.tsx
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Category } from '../../types';
 
 interface CategoryFilterProps {
   categories: Category[];
   selectedCategories: string[];
   onToggle: (category: string) => void;
+  isLoading?: boolean;
 }
 
-const CategoryFilter: React.FC<CategoryFilterProps> = ({ categories, selectedCategories, onToggle }) => {
+const CategoryFilter: React.FC<CategoryFilterProps> = ({
+  categories,
+  selectedCategories,
+  onToggle,
+  isLoading = false
+}) => {
   const sliderRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
 
-  // Scroll the slider left
-  const scrollLeft = () => {
+  const checkScrollPosition = () => {
     if (sliderRef.current) {
-      sliderRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+      const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
     }
   };
 
-  // Scroll the slider right
-  const scrollRight = () => {
+  const scroll = (direction: 'left' | 'right') => {
     if (sliderRef.current) {
-      sliderRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+      const scrollAmount = direction === 'left' ? -200 : 200;
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
-  const renderIcon = (category: Category) => {
-    switch (category.iconType) {
-      case 'cube':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
-          </svg>
-        );
-      case 'stripes':
-        return (
-          <div className="flex flex-col gap-1">
-            <div className="h-1 w-5 bg-current"></div>
-            <div className="h-1 w-5 bg-current"></div>
-            <div className="h-1 w-5 bg-current"></div>
-          </div>
-        );
-      case 'dots':
-        return (
-          <div className="grid grid-cols-3 gap-1">
-            {[...Array(9)].map((_, i) => (
-              <div key={i} className="h-1.5 w-1.5 rounded-full bg-current"></div>
-            ))}
-          </div>
-        );
-      case 'document':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-          </svg>
-        );
-      default:
-        return null;
+  const renderSkeletons = () => (
+    <div className="flex gap-2">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="w-20 h-6 rounded-full bg-gray-700 animate-pulse" />
+      ))}
+    </div>
+  );
+
+  useEffect(() => {
+    const slider = sliderRef.current;
+    if (slider) {
+      slider.addEventListener('scroll', checkScrollPosition);
+      const timer = setTimeout(checkScrollPosition, 100);
+      return () => {
+        slider.removeEventListener('scroll', checkScrollPosition);
+        clearTimeout(timer);
+      };
     }
-  };
+  }, [categories]);
 
   return (
-    <div className="mb-6 relative">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-white text-lg font-medium">Categories</h2>
-        <div className="flex space-x-2">
-          <button 
-            onClick={scrollLeft}
-            className="p-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-          </button>
-          <button 
-            onClick={scrollRight}
-            className="p-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      <div 
-        ref={sliderRef}
-        className="flex overflow-x-auto pb-2 hide-scrollbar"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      >
-        <div className="flex space-x-3">
-          {categories.map((category) => (
+    <div className="w-full mb-6 relative">
+      <h2 className="text-white font-poppins text-lg font-medium mb-3">Categories</h2>
+
+      <div className={`relative ${showLeftArrow ? "px-5" : ""}`}>
+        {showLeftArrow && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-32 h-full z-10 flex items-center z-20">
+            <div className="absolute inset-0 bg-gradient-to-r from-20% from-secondary to-transparent" />
             <button
-              key={category.id}
-              className={`flex flex-col items-center p-3 rounded-lg min-w-16 ${
-                selectedCategories.includes(category.name) 
-                  ? `bg-${category.color}-900 text-${category.color}-500` 
-                  : 'bg-gray-800 text-gray-400'
-              } hover:bg-gray-700 transition-colors`}
-              onClick={() => onToggle(category.name)}
+              onClick={() => scroll('left')}
+              className="relative z-20 p-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white ml-1"
+              aria-label="Scroll left"
             >
-              <div className={`w-10 h-10 flex items-center justify-center rounded-full ${
-                selectedCategories.includes(category.name) 
-                  ? `bg-${category.color}-800` 
-                  : 'bg-gray-700'
-              } mb-2`}>
-                {renderIcon(category)}
-              </div>
-              <span className="text-xs font-medium truncate max-w-full">
-                {category.name}
-              </span>
+              <FiChevronLeft className="h-5 w-5" />
             </button>
-          ))}
+          </div>
+        )}
+
+        <div
+          ref={sliderRef}
+          className="overflow-x-auto py-2 hide-scrollbar scroll-smooth"
+        >
+          <div className="flex gap-3 px-1">
+            {isLoading ? renderSkeletons() : (
+              categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => onToggle(category.category_name)}
+                  className={`flex flex-col items-center px-4 py-2 cursor-pointer rounded-full min-w-16 flex-shrink-0 transition-colors ${selectedCategories.includes(category.category_name)
+                    ? `bg-gray-600 text-gray-400 hover:bg-gray-600`
+                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                    }`}
+                >
+                  <span className="text-xs font-medium truncate">
+                    {category.category_name}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
         </div>
+
+        {showRightArrow && (
+          <div className="absolute right-0 top-0 bottom-0 w-32 z-10 flex items-center justify-end z-20">
+            <div className="absolute inset-0 bg-gradient-to-l from-secondary from-20% to-transparent" />
+            <button
+              onClick={() => scroll('right')}
+              className="relative z-20 p-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white mr-1"
+              aria-label="Scroll right"
+            >
+              <FiChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
-      
-      <style jsx>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
     </div>
+    
   );
 };
 

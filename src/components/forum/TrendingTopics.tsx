@@ -13,15 +13,15 @@ interface TrendingTopicsProps {
 
 const TrendingTopics: React.FC<TrendingTopicsProps> = ({ tags }) => {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {tags.map((tag, index) => (
         <Link 
           key={index} 
           href={`/tags/${tag.name}`}
           className="flex items-center justify-between p-2 rounded hover:bg-gray-800"
         >
-          <span className="text-teal-500">#{tag.name}</span>
-          <span className="text-gray-400 text-sm">{tag.count} threads</span>
+          <span className="text-teal-500 text-sm">#{tag.name}</span>
+          <span className="text-gray-400 text-xs">{tag.count} threads</span>
         </Link>
       ))}
     </div>

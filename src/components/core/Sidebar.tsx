@@ -1,7 +1,7 @@
 // src/components/layout/Sidebar.tsx
 import React from 'react';
 import Link from 'next/link';
-import { categories } from '../../utils/data';
+import { categories } from '@/constants';
 
 const Sidebar: React.FC = () => {
   return (

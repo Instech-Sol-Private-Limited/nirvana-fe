@@ -1,72 +1,71 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-primary: #fff;
+    --color-secondary: #101828;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme {
+  /* fonts */
+  --font-poppins: var(--font-poppins);
+
+  /* colora */
+  --color-primary: #fff;
+  --color-secondary: #101828;
 }
 
-/* Add this to your globals.css file */
+* {
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+}
 
-/* Hide scrollbar for Chrome, Safari and Opera */
+*::-webkit-scrollbar {
+  width: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: theme('colors.gray.900');
+  /* Use `theme()` in Tailwind v4 */
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: theme('colors.teal.600');
+  border-radius: 0.25rem;
+  /* You can still use Tailwind rounding here */
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: theme('colors.teal.500');
+}
+
+body {
+  background: var(--secondary);
+  color: var(--primary);
+  font-family: var(--font-poppins), "Poppins", sans-serif;
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Dynamic color classes for categories - include in your Tailwind config or add manually */
-.bg-teal-900 { background-color: rgba(19, 78, 74, 1); }
-.bg-teal-800 { background-color: rgba(17, 94, 89, 1); }
-.bg-teal-700 { background-color: rgba(15, 118, 110, 1); }
-.text-teal-500 { color: rgba(20, 184, 166, 1); }
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 
-.bg-blue-900 { background-color: rgba(30, 58, 138, 1); }
-.bg-blue-800 { background-color: rgba(30, 64, 175, 1); }
-.bg-blue-700 { background-color: rgba(29, 78, 216, 1); }
-.text-blue-500 { color: rgba(59, 130, 246, 1); }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-.bg-purple-900 { background-color: rgba(76, 29, 149, 1); }
-.bg-purple-800 { background-color: rgba(91, 33, 182, 1); }
-.bg-purple-700 { background-color: rgba(109, 40, 217, 1); }
-.text-purple-500 { color: rgba(168, 85, 247, 1); }
-
-.bg-orange-900 { background-color: rgba(124, 45, 18, 1); }
-.bg-orange-800 { background-color: rgba(154, 52, 18, 1); }
-.bg-orange-700 { background-color: rgba(194, 65, 12, 1); }
-.text-orange-500 { color: rgba(249, 115, 22, 1); }
-
-.bg-red-900 { background-color: rgba(127, 29, 29, 1); }
-.bg-red-800 { background-color: rgba(153, 27, 27, 1); }
-.bg-red-700 { background-color: rgba(185, 28, 28, 1); }
-.text-red-500 { color: rgba(239, 68, 68, 1); }
-
-.bg-indigo-900 { background-color: rgba(49, 46, 129, 1); }
-.bg-indigo-800 { background-color: rgba(55, 48, 163, 1); }
-.bg-indigo-700 { background-color: rgba(67, 56, 202, 1); }
-.text-indigo-500 { color: rgba(99, 102, 241, 1); }
-
-.min-w-16 { min-width: 4rem; }
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
