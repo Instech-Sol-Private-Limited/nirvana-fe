@@ -12,18 +12,19 @@ import {
     FaPlus
 } from 'react-icons/fa';
 import { getAllCategories } from '@/utils/categories';
-import { Category } from '@/types';
+import { Category, Thread } from '@/types';
 import { uploadToSupabase } from '@/utils/supabsebucket';
-import { addNewThread } from '@/utils/threads';
+import { addNewThread, updateThread } from '@/utils/threads';
 import { toast } from 'react-toastify';
 
 interface AddThreadProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
     onNewThread: () => void;
+    selectedThread?: Thread | any;
 }
 
-const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThread }) => {
+const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThread, selectedThread }) => {
     const [categoriesOption, setCategoriesOption] = useState([])
     const router = useRouter();
 
@@ -57,9 +58,19 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
         onSubmit: async (values, { resetForm, setSubmitting }) => {
             try {
                 const imageUrls = await Promise.all(
-                    values.images.map((file) => uploadToSupabase(file as File))
+                    values.previews.map(async (preview, index) => {
+                        if (preview.startsWith('http')) {
+                            return preview;
+                        } else {
+                            const file = values.images[index]
+                            const url = await uploadToSupabase(file);
+                            return url;
+                        }
+                    })
                 );
 
+
+                console.log(imageUrls)
                 const updatedValues = {
                     title: values.title,
                     description: values.content,
@@ -68,15 +79,28 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                     keywords: values.tags,
                 };
 
-                const response = await addNewThread(updatedValues);
+                if (selectedThread) {
+                    const response = await updateThread(updatedValues, selectedThread.id);
 
-                if (response.success) {
-                    toast.success('Thread created successfully!');
-                    resetForm();
-                    setIsOpen(false);
-                    onNewThread()
+                    if (response.success) {
+                        toast.success('Thread updated successfully!');
+                        resetForm();
+                        setIsOpen(false);
+                        onNewThread()
+                    } else {
+                        toast.error(response.message || 'Failed to updated thread.');
+                    }
                 } else {
-                    toast.error(response.message || 'Failed to create thread.');
+                    const response = await addNewThread(updatedValues);
+
+                    if (response.success) {
+                        toast.success('Thread created successfully!');
+                        resetForm();
+                        setIsOpen(false);
+                        onNewThread()
+                    } else {
+                        toast.error(response.message || 'Failed to create thread.');
+                    }
                 }
             } catch (error) {
                 console.error(error);
@@ -111,6 +135,34 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
     };
 
     useEffect(() => {
+        formik.setSubmitting(false)
+
+    }, [isOpen])
+
+    useEffect(() => {
+        if (selectedThread) {
+            const existingImagesAsFiles = selectedThread.imgs?.map((url: string) => {
+                return {
+                    name: url,
+                    url,
+                    isExisting: true // flag for UI logic
+                };
+            }) || [];
+
+            formik.setValues(prev => ({
+                ...prev,
+                title: selectedThread.title || '',
+                content: selectedThread.description || '',
+                category: selectedThread.category_id || '',
+                tags: selectedThread.keywords || [],
+                tagInput: '',
+                images: existingImagesAsFiles,
+                previews: selectedThread.imgs || []
+            }));
+        }
+    }, [selectedThread]);
+
+    useEffect(() => {
         const fetchCategories = async () => {
             const response = await getAllCategories();
             if (response.success) {
@@ -134,12 +186,12 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
             width="max-w-[1080px] w-11/12 flex flex-col"
             height="h-[90vh]"
         >
-            <div className='w-full p-12'>
+            <div className='w-full p-10'>
                 <h1 className="text-2xl font-bold text-white mb-3 border-l-4 border-teal-500 pl-4">
-                    Create New Thread
+                    {selectedThread?.id ? 'Update Thread' : 'Create New Thread'}
                 </h1>
 
-                <form onSubmit={formik.handleSubmit} className="py-8">
+                <form onSubmit={formik.handleSubmit} className="pt-8">
                     {/* Title Field */}
                     <div className="mb-6 group">
                         <label htmlFor="title" className="block text-white mb-2 md:text-sm text-xs font-medium">
@@ -295,7 +347,7 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                         </button>
                         <PrimaryButton
                             type="submit"
-                            text={'Create Thread'}
+                            text={selectedThread ? 'Update Thread' : 'Create Thread'}
                             className=''
                             isLoading={formik.isSubmitting}
                             disabled={formik.isSubmitting || !formik.isValid}

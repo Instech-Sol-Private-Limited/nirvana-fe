@@ -111,7 +111,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <ThreadList threads={sortedThreads} isLoading={threadsLoading} />
+          <ThreadList threads={sortedThreads} isLoading={threadsLoading} onNewThread={fetchThreads} />
         </div>
 
         <div className="w-full md:w-80">

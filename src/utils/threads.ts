@@ -60,7 +60,39 @@ const addNewThread = async (data: any) => {
     }
 };
 
+const updateThread = async (data: any, thread_id: string) => {
+    try {
+        const response = await apiClient.put(`/threads/update-thread/${thread_id}`, data);
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
 
+        return {
+            success: false,
+            // @ts-ignore
+            message: error.message || 'An unexpected error occurred'
+        };
+    }
+};
+
+const deleteThread = async (thread_id: string) => {
+    try {
+        const response = await apiClient.delete(`/threads/delete-thread/${thread_id}`);
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+
+        return {
+            success: false,
+            // @ts-ignore
+            message: error.message || 'An unexpected error occurred'
+        };
+    }
+};
 
 // ===================== Threads Comments Utils =============================
 const getThreadComments = async (thread_id: string): Promise<any> => {
@@ -99,4 +131,4 @@ const getCommentReplies = async (comment_id: string): Promise<any> => {
     }
 }
 
-export { getAllThreads, getThreadDetails, addNewThread, getThreadComments, getCommentReplies };
+export { getAllThreads, getThreadDetails, addNewThread, deleteThread, updateThread, getThreadComments, getCommentReplies };
