@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { threads, categories } from '@/constants';
 import { formatRelativeDate } from '../../../utils';
-import NestedComments from '../../../components/forum/NestedComments';
-import ReplyForm from '../../../components/forum/ReplyForm';
+// import NestedComments from '../../../components/forum/NestedComments';
+import  CommentInput from '@/components/comment/CommentInput';
 import ThreadCreatedNotification from '../../../components/forum/ThreadCreatedNotification';
 import { getThreadDetails } from '@/utils/threads';
 import { Thread } from '@/types';
@@ -29,6 +29,7 @@ import {
   FaFacebookF,
   FaLink
 } from 'react-icons/fa';
+import Comments from '@/components/comment/Comments';
 
 export default function ThreadDetailPage() {
   const router = useRouter();
@@ -121,7 +122,6 @@ export default function ThreadDetailPage() {
     <div className="w-4/5 mx-auto px-4 sm:px-0">
       {showCreatedNotification && <ThreadCreatedNotification />}
 
-      {/* Breadcrumb Navigation */}
       <nav className="mb-6 flex items-center text-sm">
         <Link href="/" className="text-gray-400 hover:text-white transition-colors">
           Home
@@ -137,10 +137,10 @@ export default function ThreadDetailPage() {
         <span className="text-white font-medium truncate">{threadData?.title}</span>
       </nav>
 
-      {/* Thread Card */}
+     
       {threadData ? (
         <div className="bg-gray-800 rounded-2xl overflow-hidden shadow-2xl border border-gray-700 transition-all hover:shadow-teal-900/10 mb-8">
-          {/* Thread Header */}
+          
           <div className="border-b border-gray-700 p-6">
             <div className="flex items-start gap-4">
               <Link href={`/users/${threadData.author_id}`} className="flex-shrink-0 group">
@@ -195,12 +195,12 @@ export default function ThreadDetailPage() {
             </div>
           </div>
 
-          {/* Thread Content */}
+        
           <div className="p-6">
             <div className="prose prose-invert max-w-none">
               <p className="text-gray-300 whitespace-pre-line leading-relaxed">{threadData.description}</p>
 
-              {/* If thread has images, show them in a better grid */}
+             
               {threadData.imgs && threadData.imgs.length > 0 && (
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
                   {threadData.imgs.map((img, index) => (
@@ -218,7 +218,7 @@ export default function ThreadDetailPage() {
               )}
             </div>
 
-            {/* Tags */}
+          
             <div className="mt-6 flex flex-wrap gap-2">
               {threadData.keywords.map((tag, index) => (
                 <Link
@@ -231,9 +231,9 @@ export default function ThreadDetailPage() {
               ))}
             </div>
 
-            {/* Actions Bar */}
+        
             <div className="mt-6 flex items-center justify-between border-t border-gray-700 pt-4">
-              {/* Left actions */}
+             
               <div className="flex items-center gap-4">
                 <button
                   onClick={handleLikeToggle}
@@ -258,7 +258,7 @@ export default function ThreadDetailPage() {
                 </button>
               </div>
 
-              {/* Right actions */}
+              
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleBookmarkToggle}
@@ -310,7 +310,7 @@ export default function ThreadDetailPage() {
         </div>
       )}
 
-      {/* Replies/Comments Section */}
+     
       <div className="mt-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-white">
@@ -329,11 +329,11 @@ export default function ThreadDetailPage() {
 
         {/* New Reply Form */}
         <div className="bg-gray-800 rounded-xl p-4 mb-8 border border-gray-700">
-          <ReplyForm threadId={threadId} />
+          <CommentInput threadId={threadId} />
         </div>
 
-        {/* Nested Comments Component */}
-        <NestedComments threadId={threadId} />
+       
+        <Comments threadId={threadId} />
       </div>
     </div>
   );
