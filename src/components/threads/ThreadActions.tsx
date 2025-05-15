@@ -41,7 +41,7 @@ const ThreadActions: React.FC<ThreadActionsProps> = ({ actions, targetType, targ
             {isDropdownOpen && (
                 <div
                     ref={dropdownRef}
-                    className="absolute top-full left-auto w-40 bg-secondary shadow-lg rounded-md border border-white/20"
+                    className="absolute top-full left-auto w-fit text-nowrap bg-secondary shadow-lg rounded-md border border-white/20"
                     style={{ left: 0 }}
                 >
                     <ul className="flex flex-col text-xs">

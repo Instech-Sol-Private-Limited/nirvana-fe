@@ -6,19 +6,20 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { threads, categories } from '@/constants';
 import { formatRelativeDate } from '../../../utils';
-// import NestedComments from '../../../components/forum/NestedComments';
-import  CommentInput from '@/components/comment/CommentInput';
+
+import CommentInput from '@/components/comment/CommentInput';
 import ThreadCreatedNotification from '../../../components/forum/ThreadCreatedNotification';
 import { getThreadDetails } from '@/utils/threads';
 import { Thread } from '@/types';
 import {
   FaRegSadTear,
-  FaChevronRight,
+  FaArrowLeft,
   FaThumbtack,
   FaCheck,
   FaRegClock,
   FaRegThumbsUp,
   FaThumbsUp,
+  FaThumbsDown,
   FaRegThumbsDown,
   FaRegComment,
   FaRegEye,
@@ -41,18 +42,37 @@ export default function ThreadDetailPage() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [isDisliked, setIsDisliked] = useState(false);
+  const [dislikeCount, setDislikeCount] = useState(0);
+
+  const handleBookmarkToggle = () => {
+    setIsBookmarked(!isBookmarked);
+  };
 
   const handleLikeToggle = () => {
     if (isLiked) {
       setLikeCount(likeCount - 1);
     } else {
       setLikeCount(likeCount + 1);
+      if (isDisliked) {
+        setDislikeCount(dislikeCount - 1); // Remove dislike if it was selected
+        setIsDisliked(false);
+      }
     }
     setIsLiked(!isLiked);
   };
 
-  const handleBookmarkToggle = () => {
-    setIsBookmarked(!isBookmarked);
+  const handleDislikeToggle = () => {
+    if (isDisliked) {
+      setDislikeCount(dislikeCount - 1);
+    } else {
+      setDislikeCount(dislikeCount + 1);
+      if (isLiked) {
+        setLikeCount(likeCount - 1); // Remove like if it was selected
+        setIsLiked(false);
+      }
+    }
+    setIsDisliked(!isDisliked);
   };
 
   const handleShareToggle = () => {
@@ -68,7 +88,7 @@ export default function ThreadDetailPage() {
       if (params && params.id) {
         const response = await getThreadDetails(params.id as string);
         if (response.success) {
-          console.log(response.data.thread)
+
           setThreadData(response.data.thread)
           setThreadId(params.id as string);
         }
@@ -122,29 +142,24 @@ export default function ThreadDetailPage() {
     <div className="w-4/5 mx-auto px-4 sm:px-0">
       {showCreatedNotification && <ThreadCreatedNotification />}
 
-      <nav className="mb-6 flex items-center text-sm">
-        <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-          Home
-        </Link>
-        <FaChevronRight className="h-3 w-3 mx-2 text-gray-600" />
-        <button
-          onClick={() => handleCategoryClick(threadData?.category_name || "")}
-          className="text-gray-400 hover:text-white transition-colors"
-        >
-          {threadData?.category_name}
-        </button>
-        <FaChevronRight className="h-3 w-3 mx-2 text-gray-600" />
-        <span className="text-white font-medium truncate">{threadData?.title}</span>
-      </nav>
 
-     
+      <div className="mb-6">
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 text-white rounded-lg hover:opacity-60 transition-all  "
+        >
+          <FaArrowLeft className="text-lg" />
+        </button>
+      </div>
+
+
       {threadData ? (
         <div className="bg-gray-800 rounded-2xl overflow-hidden shadow-2xl border border-gray-700 transition-all hover:shadow-teal-900/10 mb-8">
-          
+
           <div className="border-b border-gray-700 p-6">
             <div className="flex items-start gap-4">
               <Link href={`/users/${threadData.author_id}`} className="flex-shrink-0 group">
-                <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-gray-700 group-hover:ring-teal-500 transition-all">
+                <div className="w-12 h-12 rounded-full  ring-2 ring-gray-700 group-hover:ring-teal-500 transition-all">
                   <Image
                     src={threadData.profiles.avatar_url}
                     alt={threadData.author_name}
@@ -195,12 +210,12 @@ export default function ThreadDetailPage() {
             </div>
           </div>
 
-        
+
           <div className="p-6">
             <div className="prose prose-invert max-w-none">
               <p className="text-gray-300 whitespace-pre-line leading-relaxed">{threadData.description}</p>
 
-             
+
               {threadData.imgs && threadData.imgs.length > 0 && (
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
                   {threadData.imgs.map((img, index) => (
@@ -218,7 +233,7 @@ export default function ThreadDetailPage() {
               )}
             </div>
 
-          
+
             <div className="mt-6 flex flex-wrap gap-2">
               {threadData.keywords.map((tag, index) => (
                 <Link
@@ -231,66 +246,74 @@ export default function ThreadDetailPage() {
               ))}
             </div>
 
-        
+
+
             <div className="mt-6 flex items-center justify-between border-t border-gray-700 pt-4">
-             
+
               <div className="flex items-center gap-4">
                 <button
                   onClick={handleLikeToggle}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-700/50 transition-colors ${isLiked ? 'text-teal-400' : 'text-gray-400'}`}
+                  className={`flex items-center gap-2 ${isLiked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
                 >
                   {isLiked ? (
-                    <FaThumbsUp className="h-5 w-5" />
+                    <FaThumbsUp className="h-5 w-5 fill-current" />
                   ) : (
                     <FaRegThumbsUp className="h-5 w-5" />
                   )}
                   <span>{likeCount}</span>
                 </button>
 
-                <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors">
-                  <FaRegThumbsDown className="h-5 w-5" />
-                  <span>{threadData.total_dislikes || 0}</span>
+                <button
+                  onClick={handleDislikeToggle}
+                  className={`flex items-center gap-2 ${isDisliked ? 'text--400' : 'text-gray-400'} hover:text-gray-400 transition-colors`}
+                >
+                  {isDisliked ? (
+                    <FaThumbsDown className="h-5 w-5 fill-current" /> 
+                  ) : (
+                    <FaRegThumbsDown className="h-5 w-5"/>
+                  )}
+                  <span>{dislikeCount || 0}</span>
                 </button>
 
-                <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors">
-                  <FaRegComment className="h-5 w-5" />
+                <div className="flex items-center gap-2 text-gray-400">
+                  <FaRegComment className="h-5 w-5 fill-current" />
                   <span>{threadData.replyCount}</span>
-                </button>
+                </div>
               </div>
 
-              
+
               <div className="flex items-center gap-2">
-                <button
+                {/* <button
                   onClick={handleBookmarkToggle}
-                  className={`flex items-center justify-center p-2 rounded-lg hover:bg-gray-700/50 transition-colors ${isBookmarked ? 'text-teal-400' : 'text-gray-400'}`}
+                  className={`flex items-center justify-center ${isBookmarked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
                 >
                   {isBookmarked ? (
                     <FaBookmark className="h-5 w-5" />
                   ) : (
                     <FaRegBookmark className="h-5 w-5" />
                   )}
-                </button>
+                </button> */}
 
                 <div className="relative">
                   <button
                     onClick={handleShareToggle}
-                    className="flex items-center justify-center p-2 rounded-lg text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors"
+                    className="flex items-center justify-center text-gray-400 hover:text-teal-400 transition-colors"
                   >
-                    <FaShare className="h-5 w-5" />
+                    {/* <FaShare className="h-5 w-5" /> */}
                   </button>
 
                   {showShareOptions && (
                     <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-xl shadow-xl border border-gray-700 z-10 overflow-hidden">
                       <div className="py-1">
-                        <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left text-gray-300 hover:bg-gray-700 transition-colors">
+                        <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left text-gray-300 hover:text-teal-400 transition-colors">
                           <FaTwitter className="h-5 w-5 text-blue-500" />
                           Twitter
                         </button>
-                        <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left text-gray-300 hover:bg-gray-700 transition-colors">
+                        <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left text-gray-300 hover:text-teal-400 transition-colors">
                           <FaFacebookF className="h-5 w-5 text-blue-600" />
                           Facebook
                         </button>
-                        <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left text-gray-300 hover:bg-gray-700 transition-colors">
+                        <button className="flex items-center gap-3 w-full px-4 py-3 text-sm text-left text-gray-300 hover:text-teal-400 transition-colors">
                           <FaLink className="h-5 w-5 text-teal-500" />
                           Copy Link
                         </button>
@@ -310,7 +333,7 @@ export default function ThreadDetailPage() {
         </div>
       )}
 
-     
+
       <div className="mt-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-white">
@@ -327,12 +350,12 @@ export default function ThreadDetailPage() {
           </div>
         </div>
 
-        {/* New Reply Form */}
+
         <div className="bg-gray-800 rounded-xl p-4 mb-8 border border-gray-700">
           <CommentInput threadId={threadId} />
         </div>
 
-       
+
         <Comments threadId={threadId} />
       </div>
     </div>

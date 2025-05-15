@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { FiImage } from 'react-icons/fi';
 import {AiOutlineLoading } from 'react-icons/ai';
 import ImageUpload from '../addons/ImageUpload';
+import { addComment } from '../../utils/threads';
 
 export default function CommentInput({ threadId, parentId = null, replyToUsername = null }: { 
   threadId: string; 
@@ -18,37 +19,38 @@ export default function CommentInput({ threadId, parentId = null, replyToUsernam
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploadedPreviews, setUploadedPreviews] = useState<string[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!content.trim() && uploadedPreviews.length === 0) return;
+  if (!content.trim() && uploadedPreviews.length === 0) return;
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    try {
-      console.log({
-        threadId,
-        parentId,
-        replyToUsername,
-        content,
-        images: uploadedFiles
-      });
+  try {
+    const params = {
+      thread_id: threadId,
+      content: content.trim(),
+      imgs: uploadedPreviews.length > 0 ? uploadedPreviews : undefined,
+    };
 
-      await new Promise(resolve => setTimeout(resolve, 800));
+    const response = await addComment(params);
 
+    if (response.success) {
+      console.log(response.data.message); // "Comment created successfully!"
       setContent('');
       setUploadedFiles([]);
       setUploadedPreviews([]);
       setIsExpanded(false);
       setShowImageUpload(false);
-
-    } catch (error) {
-      console.error('Failed to submit reply:', error);
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      console.error(response.message);
     }
-  };
-
+  } catch (error) {
+    console.error('Failed to submit reply:', error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   const handleImageUploadChange = (files: File[], previews: string[]) => {
     setUploadedFiles(files);
     setUploadedPreviews(previews);
