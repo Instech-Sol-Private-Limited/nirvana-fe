@@ -60,7 +60,7 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
   const [error, setError] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  // Function to refresh replies
+  
   const refreshReplies = () => {
     setRefreshCounter(prev => prev + 1);
   };
@@ -149,7 +149,7 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
     }
   }, [parentId, refreshCounter]);
 
-  // Loading state
+
   if (loading) {
     return (
       <div className="ml-10 mt-2 text-gray-400 text-sm">
@@ -158,7 +158,6 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="ml-10 mt-2 text-red-400 text-sm">

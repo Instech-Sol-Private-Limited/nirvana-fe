@@ -36,7 +36,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     const response = await addComment(params);
 
     if (response.success) {
-      console.log(response.data.message); // "Comment created successfully!"
+      console.log(response.data.message); 
       setContent('');
       setUploadedFiles([]);
       setUploadedPreviews([]);

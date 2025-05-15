@@ -138,11 +138,11 @@ const CommentItem = ({
     if (response.success) {
       console.log(`Reply added successfully to ${isReply ? 'reply' : 'comment'} ${comment.id}`);
       
-      // This will trigger a refresh in the parent component
+      
       onReply(comment.id, comment.author.username);
       setShowReplyForm(false);
       
-      // Force parent components to update by dispatching a custom event
+     
       const refreshEvent = new CustomEvent('refreshComments', {
         detail: { commentId: comment.id }
       });

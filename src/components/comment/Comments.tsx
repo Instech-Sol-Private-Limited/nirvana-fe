@@ -7,7 +7,6 @@ import ReplyList from './ReplyList';
 import { getThreadComments, updateComment as updateCommentApi, deleteComment as deleteCommentApi } from '@/utils/threads';
 import CommentForm from './CommentForm';
 
-// Interface updated to match the API response structure
 interface CommentType {
   id: string;
   thread_id: string;
@@ -86,6 +85,7 @@ export default function Comments({ threadId }: CommentsProps) {
       setLoading(true);
       const response = await getThreadComments(threadId);
       if (response.success) {
+        console.log(response.data.comments)
         setComments(response.data.comments || []);
       } else {
         console.error(response.message);
@@ -130,7 +130,7 @@ export default function Comments({ threadId }: CommentsProps) {
               author: {
                 id: comment.user_id,
                 username: comment.user_name,
-                avatar: '/default-avatar.png' // Placeholder - update if you have avatar URLs
+                avatar: comment.profiles?.avatar_url || null,
               },
               createdAt: comment.created_at,
               likeCount: comment.total_likes,
