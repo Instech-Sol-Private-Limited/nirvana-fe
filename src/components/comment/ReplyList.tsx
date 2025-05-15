@@ -49,18 +49,16 @@ interface ReplyType {
 interface ReplyListProps {
   parentId: string;
   onReply: (commentId: string, authorUsername: string) => void;
-  onUpdate: (commentId: string, text: string) => void;
-  onDelete: (commentId: string) => void;
 }
 
-const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) => {
+const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
   const [replies, setReplies] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleReplies, setVisibleReplies] = useState(2);
   const [error, setError] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  
+
   const refreshReplies = () => {
     setRefreshCounter(prev => prev + 1);
   };
@@ -111,30 +109,15 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
   useEffect(() => {
     const fetchReplies = async () => {
       try {
-        setLoading(true);
-        console.log(parentId)
-        const response = await getCommentReplies(parentId);
-        console.log(response)
-        if (response.success && response.data && response.data.replies) {
-          const formattedReplies = response.data.replies.map((reply: ReplyType) => ({
-            id: reply.id,
-            content: reply.content,
-            author: {
-              id: reply.user_id,
-              username: reply.user_name,
-              avatar: null,
-            },
-            createdAt: reply.created_at,
-            likeCount: reply.total_likes,
-            dislikeCount: reply.total_dislikes,
-            isLiked: reply.user_reaction === 'like',
-            isDisliked: reply.user_reaction === 'dislike',
-            parentId: reply.comment_id,
-            isEdited: reply.is_edited || new Date(reply.updated_at).getTime() > new Date(reply.created_at).getTime() + 1000
-          }));
-          setReplies(formattedReplies);
-        } else {
-          setError(response.message || 'Failed to load replies');
+        if (parentId) {
+
+          setLoading(true);
+          const response = await getCommentReplies(parentId);
+          if (response.success) {
+            setReplies(response.data.replies || []);
+          } else {
+            setError(response.message || 'Failed to load replies');
+          }
         }
       } catch (err) {
         console.error('Error fetching replies:', err);
@@ -143,10 +126,8 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
         setLoading(false);
       }
     };
-    console.log(parentId)
-    if (parentId) {
-      fetchReplies();
-    }
+
+    fetchReplies();
   }, [parentId, refreshCounter]);
 
 
@@ -178,8 +159,8 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
       {replies.slice(0, visibleReplies).map(reply => (
         <CommentItem
           key={reply.id}
+          type="reply"
           comment={reply}
-          isReply={true}
           onReply={(replyId, username) => {
             onReply(replyId, username);
             refreshReplies();

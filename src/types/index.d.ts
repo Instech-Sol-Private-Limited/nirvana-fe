@@ -29,7 +29,6 @@ export interface Thread {
   profiles: {
     avatar_url: string;
   };
-  replyCount?: number;
 }
   
   export interface Comment {

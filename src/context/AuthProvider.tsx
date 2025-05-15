@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         last_name: null,
         role: null,
     });
+    
     const [authData, setAuthData] = useState<AuthData>({
         userId: null,
         accessToken: null,
@@ -141,8 +142,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     last_name: response.last_name ?? null,
                     role: response.role === 'guest' ? 'user' : response.role,
                 });
-
-                console.log("Profile fetched:", response);
             } else {
                 console.warn("No profile found for user ID:", authData.userId);
             }
