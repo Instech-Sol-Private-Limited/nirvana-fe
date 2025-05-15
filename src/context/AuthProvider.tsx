@@ -1,4 +1,5 @@
 "use client";
+
 import {
     createContext,
     useContext,
@@ -6,13 +7,13 @@ import {
     useState,
     ReactNode
 } from 'react';
-
 import {
     getSession,
     getUser,
     getProfile,
-    onAuthStateChange
-} from '../utils/auth';
+    onAuthStateChange,
+    signOut
+} from '@/utils/auth';
 
 type AuthData = {
     userId: any;
@@ -20,10 +21,23 @@ type AuthData = {
     role: string | null;
 };
 
+type userData = {
+    avatar_url: string | null;
+    email: string | null;
+    first_name: string | null;
+    id: string | null;
+    last_name: string | null;
+    role: 'superadmin' | 'admin' | 'user' | null;
+};
+
 type AuthContextType = AuthData & {
     loading: boolean;
     setAuthData: React.Dispatch<React.SetStateAction<AuthData>>;
+    logout: () => Promise<void>;
+    userData: userData;
+    setUserData: React.Dispatch<React.SetStateAction<userData>>;
 };
+
 
 const AuthContext = createContext<AuthContextType>({
     userId: null,
@@ -31,16 +45,35 @@ const AuthContext = createContext<AuthContextType>({
     role: null,
     loading: true,
     setAuthData: () => { },
+    logout: async () => { },
+    userData: {
+        avatar_url: null,
+        email: null,
+        first_name: null,
+        id: null,
+        last_name: null,
+        role: null,
+    },
+    setUserData: () => { },
 });
 
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+    const [loading, setLoading] = useState<boolean>(true);
+    const [userData, setUserData] = useState<userData>({
+        avatar_url: null,
+        email: null,
+        first_name: null,
+        id: null,
+        last_name: null,
+        role: null,
+    });
     const [authData, setAuthData] = useState<AuthData>({
         userId: null,
         accessToken: null,
         role: null
     });
-    console.log(authData)
-    const [loading, setLoading] = useState<boolean>(true);
+
 
     const updateAuthData = (partial: Partial<AuthData>) => {
         setAuthData((prev) => ({ ...prev, ...partial }));
@@ -56,36 +89,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             const session = sessionRes.data;
-           
 
             const userRes = await getUser();
-            //@ts-ignore
+            // @ts-ignore
             const currentUser = userRes.data?.user;
 
             if (!currentUser) {
+                setLoading(false);
                 setAuthData({ userId: null, accessToken: null, role: null });
                 return;
             }
 
             const profile = await getProfile(currentUser.id);
-            console.log({
-                userId: currentUser.id,
-                accessToken: session.access_token,
-                role: profile?.role || 'user'
-            })
+            localStorage.setItem("accessToken", session.access_token);
+
             setAuthData({
                 userId: currentUser.id,
                 accessToken: session.access_token,
                 role: profile?.role || 'user'
             });
-            if (session.access_token) {
-                localStorage.setItem('accessToken', session.access_token);
-            }
         } catch (error) {
             console.error('Auth error:', error);
             setAuthData({ userId: null, accessToken: null, role: null });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const logout = async () => {
+        try {
+            await signOut();
+            setAuthData({ userId: null, accessToken: null, role: null });
+            localStorage.removeItem('accessToken');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
+    const fetchProfile = async (): Promise<void> => {
+        if (!authData.userId) return;
+
+        try {
+            const response = await getProfile(authData.userId);
+
+            if (response) {
+                setUserData({
+                    avatar_url: response.avatar_url ?? null,
+                    email: response.email ?? null,
+                    first_name: response.first_name ?? null,
+                    id: response.id ?? null,
+                    last_name: response.last_name ?? null,
+                    role: response.role === 'guest' ? 'user' : response.role,
+                });
+
+                console.log("Profile fetched:", response);
+            } else {
+                console.warn("No profile found for user ID:", authData.userId);
+            }
+        } catch (error) {
+            console.error("Error fetching profile:", error);
         }
     };
 
@@ -111,11 +173,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
     }, []);
 
+    useEffect(() => {
+        fetchProfile()
+    }, [authData])
+
     return (
-        <AuthContext.Provider value={{ ...authData, loading, setAuthData }}>
+        <AuthContext.Provider
+            value={{
+                ...authData,
+                loading,
+                setAuthData,
+                logout,
+                userData,
+                setUserData
+            }}
+        >
             {children}
         </AuthContext.Provider>
-    );
+    )
 };
 
 export const useAuth = () => useContext(AuthContext);
