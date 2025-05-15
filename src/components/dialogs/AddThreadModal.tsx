@@ -338,7 +338,7 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                         <button
                             type="button"
                             className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 border border-gray-700 hover:border-gray-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                            onClick={() => router.back()}
+                            onClick={() => setIsOpen(false)}
                         >
                             Cancel
                         </button>
