@@ -55,7 +55,7 @@ export default function ThreadDetailPage() {
     } else {
       setLikeCount(likeCount + 1);
       if (isDisliked) {
-        setDislikeCount(dislikeCount - 1); // Remove dislike if it was selected
+        setDislikeCount(dislikeCount - 1); 
         setIsDisliked(false);
       }
     }
@@ -68,7 +68,7 @@ export default function ThreadDetailPage() {
     } else {
       setDislikeCount(dislikeCount + 1);
       if (isLiked) {
-        setLikeCount(likeCount - 1); // Remove like if it was selected
+        setLikeCount(likeCount - 1); 
         setIsLiked(false);
       }
     }
@@ -181,19 +181,7 @@ export default function ThreadDetailPage() {
                     {threadData.category_name}
                   </button>
 
-                  {/* {threadData.isSticky && (
-                    <span className="flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-teal-900/50 text-teal-300">
-                      <FaThumbtack className="h-3 w-3" />
-                      Pinned
-                    </span>
-                  )} */}
-
-                  {/* {threadData.isSolved && (
-                    <span className="flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-green-900/50 text-green-300">
-                      <FaCheck className="h-3 w-3" />
-                      Solved
-                    </span>
-                  )} */}
+                  
                 </div>
 
                 <div className="flex items-center text-sm text-gray-400">

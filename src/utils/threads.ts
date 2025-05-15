@@ -384,8 +384,26 @@ const getReplyReactions = async (comment_id: string): Promise<ApiResponse<any>> 
     }
 };
 
+const getThreadsByUserId = async (userId: string, limit: number = 20, offset: number = 0): Promise<ApiResponse<any>> => {
+    try {
+        const response = await apiClient.get(`/threads/get-threads-by-user/${userId}?limit=${limit}&offset=${offset}`);
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+        return {
+            success: false,
+            // @ts-ignore
+            message: error.message || 'An unexpected error occurred'
+        };
+    }
+};
+
+
 export {
     // Thread operations
+    getThreadsByUserId,
     getAllThreads,
     getThreadDetails,
     addNewThread,
