@@ -3,12 +3,16 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { FiImage } from 'react-icons/fi';
-import {AiOutlineLoading } from 'react-icons/ai';
+import { AiOutlineLoading } from 'react-icons/ai';
 import ImageUpload from '../addons/ImageUpload';
 import { addComment } from '../../utils/threads';
+import { useAuth } from '@/context/AuthProvider';
+import { uploadToSupabase } from '@/utils/supabsebucket';
+import { toast } from 'react-toastify';
 
-export default function CommentInput({ threadId, parentId = null, replyToUsername = null }: { 
-  threadId: string; 
+export default function CommentInput({ threadId, fetchComments, parentId = null, replyToUsername = null }: {
+  threadId: string;
+  fetchComments: any;
   parentId?: string | null;
   replyToUsername?: string | null;
 }) {
@@ -18,39 +22,8 @@ export default function CommentInput({ threadId, parentId = null, replyToUsernam
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploadedPreviews, setUploadedPreviews] = useState<string[]>([]);
+  const { userData } = useAuth();
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-
-  if (!content.trim() && uploadedPreviews.length === 0) return;
-
-  setIsSubmitting(true);
-
-  try {
-    const params = {
-      thread_id: threadId,
-      content: content.trim(),
-      imgs: uploadedPreviews.length > 0 ? uploadedPreviews : undefined,
-    };
-
-    const response = await addComment(params);
-
-    if (response.success) {
-      console.log(response.data.message); 
-      setContent('');
-      setUploadedFiles([]);
-      setUploadedPreviews([]);
-      setIsExpanded(false);
-      setShowImageUpload(false);
-    } else {
-      console.error(response.message);
-    }
-  } catch (error) {
-    console.error('Failed to submit reply:', error);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
   const handleImageUploadChange = (files: File[], previews: string[]) => {
     setUploadedFiles(files);
     setUploadedPreviews(previews);
@@ -64,6 +37,49 @@ const handleSubmit = async (e: React.FormEvent) => {
     setShowImageUpload(!showImageUpload);
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!content.trim() && uploadedPreviews.length === 0) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const imageUrls = await Promise.all(
+        uploadedFiles.map(async (file) => {
+          const url = await uploadToSupabase(file);
+          console.log(url)
+          return url;
+        })
+      );
+      const params = {
+        thread_id: threadId,
+        content: content.trim(),
+        imgs: imageUrls || [],
+      };
+
+      // @ts-ignore
+      const response = await addComment(params);
+
+      if (response.success) {
+        toast.success(response.data.message);
+        fetchComments()
+        setContent('');
+        setUploadedFiles([]);
+        setUploadedPreviews([]);
+        setIsExpanded(false);
+        setShowImageUpload(false);
+      } else {
+        toast.success(response.message);
+      }
+    } catch (error) {
+      // @ts-ignore
+      toast.success(error && error.message || "Something went wrong!");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const canSubmit = content.trim().length > 0 || uploadedPreviews.length > 0;
 
   return (
@@ -72,7 +88,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div className="flex-shrink-0">
           <div className="w-10 h-10 rounded-full overflow-hidden">
             <Image
-              src="https://avatar.iran.liara.run/public/22"
+              src={userData.avatar_url || "https://avatar.iran.liara.run/public/22"}
               alt="Your Avatar"
               width={40}
               height={40}
@@ -88,8 +104,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               onChange={(e) => setContent(e.target.value)}
               onFocus={handleFocus}
               placeholder={replyToUsername ? `Reply to ${replyToUsername}...` : "Write a comment..."}
-              rows={isExpanded ? 4 : 2}
-              className="w-full p-4 bg-gray-700 border border-gray-600 rounded-xl text-white resize-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="w-full p-4 bg-gray-700 rounded-xl text-white resize-none  focus:border-teal-500 focus:outline-none border border-transparent transition-all"
             ></textarea>
           </div>
 
@@ -101,6 +116,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 required={false}
                 min={0}
                 max={5}
+                isComment={true}
                 accept="image/*"
                 multiple={true}
                 value={uploadedFiles}
@@ -124,6 +140,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 >
                   <FiImage className="h-5 w-5" />
                 </button>
+
                 {uploadedPreviews.length > 0 && (
                   <span className="text-sm text-gray-400">
                     {uploadedPreviews.length} {uploadedPreviews.length === 1 ? 'image' : 'images'} attached

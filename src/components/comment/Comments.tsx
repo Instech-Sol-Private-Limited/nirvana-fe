@@ -6,66 +6,73 @@ import CommentItem from './CommentItem';
 import ReplyList from './ReplyList';
 import { getThreadComments, updateComment as updateCommentApi, deleteComment as deleteCommentApi } from '@/utils/threads';
 import CommentForm from './CommentForm';
-
+import CommentInput from './CommentInput';
 interface CommentType {
   id: string;
   thread_id: string;
-  imgs?: string[];
   content: string;
-  has_subcomment: boolean;
   total_likes: number;
   total_dislikes: number;
   user_name: string;
   user_id: string;
+  profiles: {
+    avatar_url: string;
+  }
   created_at: string;
   updated_at: string;
-  isEdited?: boolean;
+  is_edited: boolean;
+  is_deleted?: boolean;
+  is_solution: boolean;
+  imgs?: string[];
+  has_subcomment: boolean;
+  user_reaction?: any;
 }
 
 interface CommentsProps {
   threadId: string;
+  threadsStats: any;
+  setThreadsStats: any;
 }
 
-export default function Comments({ threadId }: CommentsProps) {
+export default function Comments({ threadId, threadsStats, setThreadsStats }: CommentsProps) {
   const [comments, setComments] = useState<CommentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [replyToUsername, setReplyToUsername] = useState<string | null>(null);
-  const [showMainForm, setShowMainForm] = useState(false);
 
   const handleReplyToComment = (commentId: string, authorUsername: string) => {
     setActiveReplyId(commentId);
     setReplyToUsername(authorUsername);
   };
-  
-  const handleUpdateComment = async (commentId: string, text: string) => {
+
+  const handleUpdateComment = async (
+    data: {
+      comment_id: string; content: string; imgs?: string[]
+    }): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await updateCommentApi({
-        comment_id: commentId,
-        content: text
-      });
-      
+      console.log(data)
+      const response = await updateCommentApi(data);
+
       if (response.success) {
-        setComments(comments.map(comment => 
-          comment.id === commentId 
-            ? { ...comment, content: text, isEdited: true } 
-            : comment
-        ));
-        console.log(`Updated comment ${commentId}: ${text}`);
+        fetchComments();
+
+        return { success: true };
       } else {
         console.error("Failed to update comment:", response.message);
+        return { success: false, message: response.message };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating comment:", error);
+      return { success: false, message: error.message || "Unknown error" };
     }
   };
-  
+
   const handleDeleteComment = async (commentId: string) => {
     try {
       const response = await deleteCommentApi(commentId);
-      
+
       if (response.success) {
-        const newComments = comments.filter(comment => 
+        const newComments = comments.filter(comment =>
           comment.id !== commentId
         );
         setComments(newComments);
@@ -78,21 +85,28 @@ export default function Comments({ threadId }: CommentsProps) {
     }
   };
 
-   useEffect(() => {
-    const fetchComments = async () => {
+  const fetchComments = async () => {
+    try {
       if (!threadId) return;
-      
-      setLoading(true);
       const response = await getThreadComments(threadId);
+
       if (response.success) {
-        console.log(response.data.comments)
         setComments(response.data.comments || []);
+        setThreadsStats((prev: any) => ({
+          ...prev,
+          comments: response.data?.comments.length
+        }))
       } else {
         console.error(response.message);
       }
+    } catch (error) {
+      console.error(error);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
+  useEffect(() => {
     fetchComments();
   }, [threadId]);
 
@@ -120,36 +134,33 @@ export default function Comments({ threadId }: CommentsProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {comments.map(comment => (
-        <div key={comment.id}>
-          <CommentItem
-            comment={{
-              id: comment.id,
-              content: comment.content,
-              author: {
-                id: comment.user_id,
-                username: comment.user_name,
-                avatar: comment.profiles?.avatar_url || null,
-              },
-              createdAt: comment.created_at,
-              likeCount: comment.total_likes,
-              dislikeCount: comment.total_dislikes,
-              isEdited: Boolean(comment.isEdited),
-              images: comment.imgs
-            }}
-            onReply={handleReplyToComment}
-            onUpdate={handleUpdateComment}
-            onDelete={handleDeleteComment}
-          />
-            <ReplyList 
-              parentId={comment.id}
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-white">
+          Comments ({threadsStats.comments})
+        </h2>
+      </div>
+
+      <div className="bg-gray-800 rounded-xl p-4 mb-8 border border-gray-700">
+        <CommentInput threadId={threadId} fetchComments={fetchComments} />
+      </div>
+
+      <div className="space-y-8">
+        {comments.map(comment => (
+          <div key={comment.id}>
+            <CommentItem
+              comment={comment}
               onReply={handleReplyToComment}
               onUpdate={handleUpdateComment}
               onDelete={handleDeleteComment}
             />
-        </div>
-      ))}
+            <ReplyList
+              parentId={comment.id}
+              onReply={handleReplyToComment}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
