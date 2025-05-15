@@ -15,7 +15,8 @@ import { toast } from 'react-toastify';
 
 interface CommentType {
   id: string;
-  thread_id: string;
+  thread_id?: string;
+  comment_id?: string;
   content: string;
   total_likes: number;
   total_dislikes: number;
@@ -28,17 +29,18 @@ interface CommentType {
   updated_at: string;
   is_edited: boolean;
   is_deleted?: boolean;
-  is_solution: boolean;
+  is_solution?: boolean;
   imgs?: string[];
-  has_subcomment: boolean;
+  has_subcomment?: boolean;
   user_reaction?: any;
 }
+
 
 interface CommentItemProps {
   comment: CommentType;
   type?: "reply" | "comment";
-  onReply: (commentId: string, authorUsername: string) => void;
-  onUpdate?: (data: { comment_id: string; content: string; imgs?: string[] }) => Promise<{ success: boolean; message?: string }>;
+  onReply: (data: { comment_id: string, user_name: string }) => void;
+  onUpdate: (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => Promise<any>;
   onDelete?: (commentId: string) => void;
 }
 
@@ -49,7 +51,6 @@ const CommentItem = ({
   onUpdate,
   onDelete,
 }: CommentItemProps) => {
-  console.log(type === "reply" && comment)
   const [isLiked, setIsLiked] = useState(comment.user_reaction === 'like');
   const [isDisliked, setIsDisliked] = useState(comment.user_reaction === 'dislike');
   const [likeCount, setLikeCount] = useState(comment.total_likes);
@@ -102,9 +103,6 @@ const CommentItem = ({
 
   const handleReplyClick = () => {
     setShowReplyForm(!showReplyForm);
-    if (!showReplyForm) {
-      onReply(comment.id, comment.user_name);
-    }
   };
 
   const handleCancelReply = () => {
@@ -120,7 +118,12 @@ const CommentItem = ({
       });
 
       if (response.success) {
-        onReply(comment.id, comment.user_name);
+        toast.success(response.data.message)
+        const data = {
+          comment_id: comment.id,
+          user_name: comment.user_name
+        }
+        onReply(data);
         setShowReplyForm(false);
         window.dispatchEvent(new CustomEvent('refreshComments', { detail: { commentId: comment.id } }));
       } else {
@@ -151,7 +154,6 @@ const CommentItem = ({
     previews: string[];
   }) => {
     try {
-      console.log(images, previews)
       const imageUrls = await Promise.all(
         previews?.map(async (preview, index) => {
           if (preview.startsWith('http')) {
@@ -165,20 +167,17 @@ const CommentItem = ({
         })
       );
 
-      const updatedValues = {
+      const updatedCommentValues = {
         comment_id: comment.id,
         content,
         imgs: imageUrls ? imageUrls : [],
       };
 
-      if (onUpdate) {
-        // @ts-ignore
-        const response = await onUpdate(updatedValues);
-        if (response.success) {
-          toast.success('Comment updated successfully!');
-        } else {
-          toast.error(response.message || 'Failed to update comment.');
-        }
+      const response = await onUpdate(updatedCommentValues);
+      if (response.success) {
+        toast.success('Comment updated successfully!');
+      } else {
+        toast.error(response.message || 'Failed to update comment.');
       }
     } catch (error) {
       toast.error('Something went wrong');
@@ -219,16 +218,15 @@ const CommentItem = ({
                   <div className="flex-grow flex items-center gap-3">
                     <h3 className="text-white capitalize font-medium hover:text-teal-400 transition-colors">
                       {comment.user_name}
+                      {comment.is_edited && <span className="ml-2 text-xs text-gray-500 italic">(edited)</span>}
                     </h3>
 
-                    {!comment.is_solution && (
+                    {type !== "reply" && comment.is_solution && (
                       <span className="ml-2 flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-900/40 text-green-300">
                         <CheckCircle className="h-3 w-3" />
                         Solution
                       </span>
                     )}
-
-                    {comment.is_edited && <span className="ml-2 text-xs text-gray-500 italic">edited</span>}
                   </div>
                 </div>
 
@@ -257,33 +255,33 @@ const CommentItem = ({
               <div className="pl-8">
                 <CommentContent content={comment.content} images={type === "reply" ? undefined : comment.imgs} />
 
-                {!comment.is_edited && (
-                  <div className="w-full flex items-center gap-4 mt-5 pl-2">
-                    <button
-                      onClick={handleLikeToggle}
-                      className={`flex items-center gap-1 text-xs ${isLiked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
-                    >
-                      <ThumbsUp className="h-4 w-4" fill={isLiked ? 'currentColor' : 'none'} />
-                      <span>{likeCount}</span>
-                    </button>
+                {/* {comment.is_edited && ( */}
+                <div className="w-full flex items-center gap-4 mt-5 pl-2">
+                  <button
+                    onClick={handleLikeToggle}
+                    className={`flex items-center gap-1 text-xs ${isLiked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
+                  >
+                    <ThumbsUp className="h-4 w-4" fill={isLiked ? 'currentColor' : 'none'} />
+                    <span>{likeCount}</span>
+                  </button>
 
-                    <button
-                      onClick={handleDislikeToggle}
-                      className={`flex items-center gap-1 text-xs ${isDisliked ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-600 transition-colors`}
-                    >
-                      <ThumbsDown className="h-4 w-4" fill={isDisliked ? 'currentColor' : 'none'} />
-                      <span>{dislikeCount}</span>
-                    </button>
+                  <button
+                    onClick={handleDislikeToggle}
+                    className={`flex items-center gap-1 text-xs ${isDisliked ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-600 transition-colors`}
+                  >
+                    <ThumbsDown className="h-4 w-4" fill={isDisliked ? 'currentColor' : 'none'} />
+                    <span>{dislikeCount}</span>
+                  </button>
 
-                    <button
-                      onClick={handleReplyClick}
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-teal-400 transition-colors"
-                    >
-                      <Reply className="h-4 w-4" />
-                      Reply
-                    </button>
-                  </div>
-                )}
+                  <button
+                    onClick={handleReplyClick}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-teal-400 transition-colors"
+                  >
+                    <Reply className="h-4 w-4" />
+                    Reply
+                  </button>
+                </div>
+                {/* )} */}
 
                 {showReplyForm && (
                   <div className="mt-3 pl-2">

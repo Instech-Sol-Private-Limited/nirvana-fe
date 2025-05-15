@@ -1,5 +1,3 @@
-// ReplyList.tsx - Updated implementation
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,69 +11,47 @@ interface Author {
   avatar?: string | null;
   role?: string;
 }
-
-interface Comment {
-  id: string;
-  content: string;
-  author: Author;
-  createdAt: string;
-  likeCount: number;
-  dislikeCount?: number;
-  isLiked?: boolean;
-  isDisliked?: boolean;
-  isEdited?: boolean;
-  isAcceptedAnswer?: boolean;
-  parentId?: string;
-  images?: string[];
-}
-
 interface ReplyType {
   id: string;
+  comment_id?: string;
   content: string;
-  comment_id: string;
-  user_id: string;
-  user_name: string;
-  created_at: string;
-  updated_at: string;
   total_likes: number;
   total_dislikes: number;
+  user_name: string;
+  user_id: string;
+  profiles: {
+    avatar_url: string;
+  };
+  created_at: string;
+  updated_at: string;
   is_edited: boolean;
-  is_deleted: boolean;
-  user_reaction: string | null;
-  is_liked?: boolean;
-  is_disliked?: boolean;
+  is_deleted?: boolean;
+  user_reaction?: any;
 }
-
 interface ReplyListProps {
   parentId: string;
   onReply: (commentId: string, authorUsername: string) => void;
 }
 
 const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
-  const [replies, setReplies] = useState<Comment[]>([]);
+  const [replies, setReplies] = useState<ReplyType[]>([]);
   const [loading, setLoading] = useState(true);
   const [visibleReplies, setVisibleReplies] = useState(2);
   const [error, setError] = useState<string | null>(null);
-  const [refreshCounter, setRefreshCounter] = useState(0);
 
-
-  const refreshReplies = () => {
-    setRefreshCounter(prev => prev + 1);
-  };
-
-  const handleUpdateReply = async (replyId: string, text: string) => {
+  const handleUpdateReply = async (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => {
     try {
       const response = await updateReply({
-        comment_id: replyId,
-        content: text
+        comment_id: data.comment_id,
+        content: data.content
       });
 
       if (response.success) {
-        setReplies(replies.map(reply =>
-          reply.id === replyId
-            ? { ...reply, content: text, isEdited: true }
-            : reply
-        ));
+        // setReplies(replies.map(reply =>
+        //   reply.id === replyId
+        //     ? { ...reply, content: text  }
+        //     : reply
+        // ));
       } else {
         console.error("Failed to update reply:", response.message);
       }
@@ -106,30 +82,29 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
     setVisibleReplies(2);
   };
 
-  useEffect(() => {
-    const fetchReplies = async () => {
-      try {
-        if (parentId) {
-
-          setLoading(true);
-          const response = await getCommentReplies(parentId);
-          if (response.success) {
-            setReplies(response.data.replies || []);
-          } else {
-            setError(response.message || 'Failed to load replies');
-          }
+  const fetchReplies = async (parentId: string) => {
+    try {
+      console.log(parentId)
+      if (parentId) {
+        setLoading(true);
+        const response = await getCommentReplies(parentId);
+        if (response.success) {
+          setReplies(response.data.replies || []);
+        } else {
+          setError(response.message || 'Failed to load replies');
         }
-      } catch (err) {
-        console.error('Error fetching replies:', err);
-        setError('Failed to load replies');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching replies:', err);
+      setError('Failed to load replies');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchReplies();
-  }, [parentId, refreshCounter]);
-
+  useEffect(() => {
+    fetchReplies(parentId);
+  }, [parentId]);
 
   if (loading) {
     return (
@@ -161,9 +136,9 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
           key={reply.id}
           type="reply"
           comment={reply}
-          onReply={(replyId, username) => {
-            onReply(replyId, username);
-            refreshReplies();
+          onReply={(data: { comment_id: string, user_name: string }) => {
+            fetchReplies(data.comment_id);
+            onReply(data.comment_id, data.user_name);
           }}
           onUpdate={handleUpdateReply}
           onDelete={handleDeleteReply}

@@ -182,7 +182,7 @@ const addComment = async (params: AddCommentParams): Promise<ApiResponse<any>> =
 interface UpdateCommentParams {
     comment_id: string;
     content: string;
-    imgs?: string[];
+    imgs?: (string | undefined)[]
 }
 
 const updateComment = async (params: UpdateCommentParams): Promise<ApiResponse<any>> => {
@@ -309,14 +309,12 @@ const addReply = async (params: AddReplyParams): Promise<ApiResponse<any>> => {
 interface UpdateReplyParams {
     comment_id: string;
     content: string;
-    imgs?: string[];
 }
 
 const updateReply = async (params: UpdateReplyParams): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.put(`/threads/update-reply/${params.comment_id}`, {
             content: params.content,
-            imgs: params.imgs
         });
         return {
             success: true,

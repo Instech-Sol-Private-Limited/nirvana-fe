@@ -47,7 +47,7 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
 
   const handleUpdateComment = async (
     data: {
-      comment_id: string; content: string; imgs?: string[]
+      comment_id: string; content: string; imgs?: (string | undefined)[]
     }): Promise<{ success: boolean; message?: string }> => {
     try {
       console.log(data)
@@ -121,46 +121,46 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
     );
   }
 
-  if (comments.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10 bg-gray-800 rounded-xl border border-gray-700">
-        <div className="bg-gray-700 rounded-full p-3 mb-4">
-          <MessageCircle className="h-6 w-6 text-gray-400" />
-        </div>
-        <p className="text-gray-400 text-center">No comments yet.</p>
-        <p className="text-gray-500 text-sm text-center mt-1">Be the first to start the conversation!</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">
-          Comments ({threadsStats.comments})
-        </h2>
+    <>
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-white">
+            Comments ({threadsStats.comments})
+          </h2>
+        </div>
+
+        <div className="bg-gray-800 rounded-xl p-4 mb-8 border border-gray-700">
+          <CommentInput threadId={threadId} fetchComments={fetchComments} />
+        </div>
+
+        <div className="space-y-8">
+          {comments.map(comment => (
+            <div key={comment.id}>
+              <CommentItem
+                comment={comment}
+                onReply={handleReplyToComment}
+                onUpdate={handleUpdateComment}
+                onDelete={handleDeleteComment}
+              />
+              <ReplyList
+                parentId={comment.id}
+                onReply={handleReplyToComment}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="bg-gray-800 rounded-xl p-4 mb-8 border border-gray-700">
-        <CommentInput threadId={threadId} fetchComments={fetchComments} />
-      </div>
-
-      <div className="space-y-8">
-        {comments.map(comment => (
-          <div key={comment.id}>
-            <CommentItem
-              comment={comment}
-              onReply={handleReplyToComment}
-              onUpdate={handleUpdateComment}
-              onDelete={handleDeleteComment}
-            />
-            <ReplyList
-              parentId={comment.id}
-              onReply={handleReplyToComment}
-            />
+      {comments.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-10 bg-gray-800 rounded-xl border border-gray-700">
+          <div className="bg-gray-700 rounded-full p-3 mb-4">
+            <MessageCircle className="h-6 w-6 text-gray-400" />
           </div>
-        ))}
-      </div>
-    </div>
+          <p className="text-gray-400 text-center">No comments yet.</p>
+          <p className="text-gray-500 text-sm text-center mt-1">Be the first to start the conversation!</p>
+        </div>
+      )}
+    </>
   );
 }
