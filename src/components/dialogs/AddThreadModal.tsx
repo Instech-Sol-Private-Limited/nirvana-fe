@@ -69,8 +69,6 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                     })
                 );
 
-
-                console.log(imageUrls)
                 const updatedValues = {
                     title: values.title,
                     description: values.content,
@@ -109,7 +107,6 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                 setSubmitting(false);
             }
         },
-
     });
 
     const handleAddTag = () => {
