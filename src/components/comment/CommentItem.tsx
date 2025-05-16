@@ -35,11 +35,12 @@ interface CommentType {
   user_reaction?: any;
 }
 
-
 interface CommentItemProps {
   comment: CommentType;
-  type?: "reply" | "comment";
-  onReply: (data: { comment_id: string, user_name: string }) => void;
+  type: "reply" | "comment";
+  reply_to?: string;
+  parentId: string;
+  fetchReplies: (parentId: string) => void;
   onUpdate: (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => Promise<any>;
   onDelete?: (commentId: string) => void;
 }
@@ -47,7 +48,9 @@ interface CommentItemProps {
 const CommentItem = ({
   comment,
   type = "comment",
-  onReply,
+  parentId,
+  reply_to,
+  fetchReplies,
   onUpdate,
   onDelete,
 }: CommentItemProps) => {
@@ -59,7 +62,6 @@ const CommentItem = ({
   const [isEditing, setIsEditing] = useState(false);
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
   const { userId } = useAuth();
   const isAuthor = userId === comment.user_id;
 
@@ -112,20 +114,16 @@ const CommentItem = ({
   const handleSubmitReply = async (text: string) => {
     try {
       setReplySubmitting(true);
+
       const response = await addReply({
-        comment_id: comment.id,
+        comment_id: parentId,
         content: text,
       });
 
       if (response.success) {
+        fetchReplies(parentId);
         toast.success(response.data.message)
-        const data = {
-          comment_id: comment.id,
-          user_name: comment.user_name
-        }
-        onReply(data);
         setShowReplyForm(false);
-        window.dispatchEvent(new CustomEvent('refreshComments', { detail: { commentId: comment.id } }));
       } else {
         console.error('Failed to add reply:', response.message);
       }
@@ -204,7 +202,7 @@ const CommentItem = ({
           {isEditing ? (
             <CommentEditForm
               initialContent={comment.content}
-              type={type}
+              type={"reply"}
               placeholder={`Reply to ${comment.user_name}...`}
               initialImages={comment.imgs}
               onSubmit={handleSubmitEdit}
@@ -286,7 +284,8 @@ const CommentItem = ({
                 {showReplyForm && (
                   <div className="mt-3 pl-2">
                     <CommentForm
-                      placeholder={`Reply to ${comment.user_name}...`}
+                      reply_to={reply_to}
+                      placeholder={`Reply to ${reply_to ? reply_to : comment.user_name}...`}
                       onSubmit={handleSubmitReply}
                       onCancel={handleCancelReply}
                       isSubmitting={replySubmitting}

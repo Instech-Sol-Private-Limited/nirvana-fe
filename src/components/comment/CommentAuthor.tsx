@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { Author } from '@/constants/mockData';
 
 interface CommentAuthorProps {
   author: {

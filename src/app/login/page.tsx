@@ -39,6 +39,7 @@ export default function LoginPage() {
             if (response.success) {
                 const data = response.data;
                 if (data) {
+                    localStorage.setItem("accessToken", data?.session.access_token);
                     setAuthData({
                         accessToken: data?.session.access_token || null,
                         userId: data.session.user?.id || null,

@@ -4,29 +4,9 @@ import { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import CommentItem from './CommentItem';
 import ReplyList from './ReplyList';
-import { getThreadComments, updateComment as updateCommentApi, deleteComment as deleteCommentApi } from '@/utils/threads';
-import CommentForm from './CommentForm';
+import { getThreadComments, updateComment as updateCommentApi, deleteComment as deleteCommentApi, getCommentReplies } from '@/utils/threads';
 import CommentInput from './CommentInput';
-interface CommentType {
-  id: string;
-  thread_id: string;
-  content: string;
-  total_likes: number;
-  total_dislikes: number;
-  user_name: string;
-  user_id: string;
-  profiles: {
-    avatar_url: string;
-  }
-  created_at: string;
-  updated_at: string;
-  is_edited: boolean;
-  is_deleted?: boolean;
-  is_solution: boolean;
-  imgs?: string[];
-  has_subcomment: boolean;
-  user_reaction?: any;
-}
+import { Comment, Reply } from '@/types';
 
 interface CommentsProps {
   threadId: string;
@@ -35,22 +15,16 @@ interface CommentsProps {
 }
 
 export default function Comments({ threadId, threadsStats, setThreadsStats }: CommentsProps) {
-  const [comments, setComments] = useState<CommentType[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
-  const [replyToUsername, setReplyToUsername] = useState<string | null>(null);
-
-  const handleReplyToComment = (commentId: string, authorUsername: string) => {
-    setActiveReplyId(commentId);
-    setReplyToUsername(authorUsername);
-  };
+  const [replyLoading, setReplyLoading] = useState(true);
 
   const handleUpdateComment = async (
     data: {
       comment_id: string; content: string; imgs?: (string | undefined)[]
     }): Promise<{ success: boolean; message?: string }> => {
     try {
-      console.log(data)
       const response = await updateCommentApi(data);
 
       if (response.success) {
@@ -92,17 +66,32 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
 
       if (response.success) {
         setComments(response.data.comments || []);
+        if (response.data.comments.has_subcomment) {
+
+        }
         setThreadsStats((prev: any) => ({
           ...prev,
           comments: response.data?.comments.length
         }))
-      } else {
-        console.error(response.message);
       }
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReplies = async (parentId: string) => {
+    try {
+      const response = await getCommentReplies(parentId);
+      if (response.success) {
+        setReplies(response.data.replies || []);
+      } else {
+      }
+    } catch (err) {
+      console.error('Error fetching replies:', err);
+    } finally {
+      setReplyLoading(false);
     }
   };
 
@@ -139,13 +128,18 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
             <div key={comment.id}>
               <CommentItem
                 comment={comment}
-                onReply={handleReplyToComment}
+                type="comment"
+                parentId={comment.id}
+                fetchReplies={fetchReplies}
                 onUpdate={handleUpdateComment}
                 onDelete={handleDeleteComment}
               />
               <ReplyList
                 parentId={comment.id}
-                onReply={handleReplyToComment}
+                fetchReplies={fetchReplies}
+                replies={replies}
+                loading={replyLoading}
+                setLoading={setReplyLoading}
               />
             </div>
           ))}

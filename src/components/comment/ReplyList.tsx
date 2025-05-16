@@ -3,41 +3,19 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import CommentItem from './CommentItem';
-import { getCommentReplies, updateReply, deleteReply } from '@/utils/threads';
+import { updateReply, deleteReply } from '@/utils/threads';
+import { Reply } from '@/types';
 
-interface Author {
-  id: string;
-  username: string;
-  avatar?: string | null;
-  role?: string;
-}
-interface ReplyType {
-  id: string;
-  comment_id?: string;
-  content: string;
-  total_likes: number;
-  total_dislikes: number;
-  user_name: string;
-  user_id: string;
-  profiles: {
-    avatar_url: string;
-  };
-  created_at: string;
-  updated_at: string;
-  is_edited: boolean;
-  is_deleted?: boolean;
-  user_reaction?: any;
-}
 interface ReplyListProps {
   parentId: string;
-  onReply: (commentId: string, authorUsername: string) => void;
+  fetchReplies: (parentId: string) => void;
+  replies: Reply[];
+  loading: boolean;
+  setLoading: (value: boolean) => void
 }
 
-const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
-  const [replies, setReplies] = useState<ReplyType[]>([]);
-  const [loading, setLoading] = useState(true);
+const ReplyList = ({ parentId, fetchReplies, replies, loading, setLoading }: ReplyListProps) => {
   const [visibleReplies, setVisibleReplies] = useState(2);
-  const [error, setError] = useState<string | null>(null);
 
   const handleUpdateReply = async (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => {
     try {
@@ -47,11 +25,7 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
       });
 
       if (response.success) {
-        // setReplies(replies.map(reply =>
-        //   reply.id === replyId
-        //     ? { ...reply, content: text  }
-        //     : reply
-        // ));
+        fetchReplies(parentId)
       } else {
         console.error("Failed to update reply:", response.message);
       }
@@ -65,7 +39,7 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
       const response = await deleteReply(replyId);
 
       if (response.success) {
-        setReplies(replies.filter(reply => reply.id !== replyId));
+        fetchReplies(parentId)
       } else {
         console.error("Failed to delete reply:", response.message);
       }
@@ -82,42 +56,18 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
     setVisibleReplies(2);
   };
 
-  const fetchReplies = async (parentId: string) => {
-    try {
-      console.log(parentId)
-      if (parentId) {
-        setLoading(true);
-        const response = await getCommentReplies(parentId);
-        if (response.success) {
-          setReplies(response.data.replies || []);
-        } else {
-          setError(response.message || 'Failed to load replies');
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching replies:', err);
-      setError('Failed to load replies');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchReplies(parentId);
+    if (parentId) {
+      setLoading(true)
+      fetchReplies(parentId);
+    }
+
   }, [parentId]);
 
   if (loading) {
     return (
       <div className="ml-10 mt-2 text-gray-400 text-sm">
         Loading replies...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="ml-10 mt-2 text-red-400 text-sm">
-        {error}
       </div>
     );
   }
@@ -131,15 +81,14 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
 
   return (
     <div className="mt-4">
-      {replies.slice(0, visibleReplies).map(reply => (
+      {replies.reverse().slice(0, visibleReplies).map(reply => (
         <CommentItem
           key={reply.id}
           type="reply"
+          reply_to={reply.user_name}
           comment={reply}
-          onReply={(data: { comment_id: string, user_name: string }) => {
-            fetchReplies(data.comment_id);
-            onReply(data.comment_id, data.user_name);
-          }}
+          parentId={parentId}
+          fetchReplies={fetchReplies}
           onUpdate={handleUpdateReply}
           onDelete={handleDeleteReply}
         />
