@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Thread, Category } from '../../types';
 import ThreadList from './ThreadList';
-import { threadApi } from '../../utils/api';
+
 
 interface CategoryThreadsProps {
   categories: Category[];
@@ -58,7 +58,7 @@ const CategoryThreads: React.FC<CategoryThreadsProps> = ({
             </Link>
           </div>
           
-          {/* Using the updated ThreadList component that makes threads clickable */}
+        
           <ThreadList threads={threads} />
           
           {threads.length >= maxThreadsPerCategory && (

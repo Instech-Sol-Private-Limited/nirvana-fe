@@ -5,17 +5,19 @@ import CategoryFilter from '../components/forum/CategoryFilter';
 import ThreadList from '../components/forum/ThreadList';
 import NewThreadCard from '../components/forum/NewThreadCard';
 import TrendingTopics from '../components/forum/TrendingTopics';
-import { trendingTags } from '@/constants';
 import { Thread, ThreadFilter } from '../types';
 import { getAllCategories } from '@/utils/categories';
 import { getAllThreads } from '@/utils/threads';
+import { TagCount, getTrendingTopics } from '@/utils/trending';
 
 export default function HomePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [categories, setCategories] = useState([]);
   const [threads, setThreads] = useState<Thread[]>([]);
+  const [trendingTags, setTrendingTags] = useState<TagCount[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [threadsLoading, setThreadsLoading] = useState(true);
+  const [trendingLoading, setTrendingLoading] = useState(true);
   const [filter, setFilter] = useState<ThreadFilter>({
     sortBy: 'recent',
     timeRange: 'all'
@@ -43,10 +45,7 @@ export default function HomePage() {
         return new Date(b.publish_date).getTime() - new Date(a.publish_date).getTime();
       case 'popular':
         return b.total_likes - a.total_likes;
-      // case 'unanswered':
-      //   return a.replyCount - b.replyCount;
-      // case 'solved':
-      //   return Number(b.isSolved) - Number(a.isSolved);
+      
       default:
         return 0;
     }
@@ -68,10 +67,23 @@ export default function HomePage() {
     }
   }
 
+  const fetchTrendingTopics = async () => {
+    setTrendingLoading(true);
+    const response = await getTrendingTopics();
+    if (response.success) {
+      setTrendingTags(response.data);
+    } else {
+      console.error('Failed to fetch trending topics:', response.error);
+      setTrendingTags([]);
+    }
+    setTrendingLoading(false);
+  }
+
   useEffect(() => {
-    fetchCategories()
-    fetchThreads()
-  }, [])
+    fetchCategories();
+    fetchThreads();
+    fetchTrendingTopics();
+  }, []);
 
   return (
     <>
@@ -94,8 +106,7 @@ export default function HomePage() {
               >
                 <option value="recent">Most Recent</option>
                 <option value="popular">Most Popular</option>
-                {/* <option value="unanswered">Unanswered</option>
-              <option value="solved">Solved</option> */}
+               
               </select>
               <select
                 className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1 text-sm"
