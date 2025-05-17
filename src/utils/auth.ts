@@ -13,8 +13,6 @@ interface UserProfile {
     updated_at: string;
 }
 
-
-
 const signIn = async (email: string, password: string) => {
     try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });

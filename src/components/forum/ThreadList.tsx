@@ -118,7 +118,7 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, isLoading = false, onN
                       </div>
                       <div className="flex items-center gap-1 text-sm">
                         <FaRegComment className="text-gray-400 cursor-pointer" />
-                        <span>{thread.replyCount || 0}</span>
+                        <span>{thread.total_dislikes || 0}</span>
                       </div>
 
                       {thread.author_id === userId && (

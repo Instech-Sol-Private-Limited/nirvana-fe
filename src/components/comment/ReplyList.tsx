@@ -1,81 +1,31 @@
-// ReplyList.tsx - Updated implementation
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import CommentItem from './CommentItem';
-import { getCommentReplies, updateReply, deleteReply } from '@/utils/threads';
-
-interface Author {
-  id: string;
-  username: string;
-  avatar?: string | null;
-  role?: string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  author: Author;
-  createdAt: string;
-  likeCount: number;
-  dislikeCount?: number;
-  isLiked?: boolean;
-  isDisliked?: boolean;
-  isEdited?: boolean;
-  isAcceptedAnswer?: boolean;
-  parentId?: string;
-  images?: string[];
-}
-
-interface ReplyType {
-  id: string;
-  content: string;
-  comment_id: string;
-  user_id: string;
-  user_name: string;
-  created_at: string;
-  updated_at: string;
-  total_likes: number;
-  total_dislikes: number;
-  is_edited: boolean;
-  is_deleted: boolean;
-  user_reaction: string | null;
-  is_liked?: boolean;
-  is_disliked?: boolean;
-}
+import { updateReply, deleteReply } from '@/utils/threads';
+import { Reply } from '@/types';
 
 interface ReplyListProps {
   parentId: string;
-  onReply: (commentId: string, authorUsername: string) => void;
+  fetchReplies: (parentId: string) => void;
+  replies: Reply[];
+  loading: boolean;
+  setLoading: (value: boolean) => void
 }
 
-const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
-  const [replies, setReplies] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+const ReplyList = ({ parentId, fetchReplies, replies, loading, setLoading }: ReplyListProps) => {
   const [visibleReplies, setVisibleReplies] = useState(2);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshCounter, setRefreshCounter] = useState(0);
 
-
-  const refreshReplies = () => {
-    setRefreshCounter(prev => prev + 1);
-  };
-
-  const handleUpdateReply = async (replyId: string, text: string) => {
+  const handleUpdateReply = async (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => {
     try {
       const response = await updateReply({
-        comment_id: replyId,
-        content: text
+        comment_id: data.comment_id,
+        content: data.content
       });
 
       if (response.success) {
-        setReplies(replies.map(reply =>
-          reply.id === replyId
-            ? { ...reply, content: text, isEdited: true }
-            : reply
-        ));
+        fetchReplies(parentId)
       } else {
         console.error("Failed to update reply:", response.message);
       }
@@ -89,7 +39,7 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
       const response = await deleteReply(replyId);
 
       if (response.success) {
-        setReplies(replies.filter(reply => reply.id !== replyId));
+        fetchReplies(parentId)
       } else {
         console.error("Failed to delete reply:", response.message);
       }
@@ -107,42 +57,17 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
   };
 
   useEffect(() => {
-    const fetchReplies = async () => {
-      try {
-        if (parentId) {
+    if (parentId) {
+      setLoading(true)
+      fetchReplies(parentId);
+    }
 
-          setLoading(true);
-          const response = await getCommentReplies(parentId);
-          if (response.success) {
-            setReplies(response.data.replies || []);
-          } else {
-            setError(response.message || 'Failed to load replies');
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching replies:', err);
-        setError('Failed to load replies');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReplies();
-  }, [parentId, refreshCounter]);
-
+  }, [parentId]);
 
   if (loading) {
     return (
       <div className="ml-10 mt-2 text-gray-400 text-sm">
         Loading replies...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="ml-10 mt-2 text-red-400 text-sm">
-        {error}
       </div>
     );
   }
@@ -156,15 +81,14 @@ const ReplyList = ({ parentId, onReply }: ReplyListProps) => {
 
   return (
     <div className="mt-4">
-      {replies.slice(0, visibleReplies).map(reply => (
+      {replies.reverse().slice(0, visibleReplies).map(reply => (
         <CommentItem
           key={reply.id}
           type="reply"
+          reply_to={reply.user_name}
           comment={reply}
-          onReply={(replyId, username) => {
-            onReply(replyId, username);
-            refreshReplies();
-          }}
+          parentId={parentId}
+          fetchReplies={fetchReplies}
           onUpdate={handleUpdateReply}
           onDelete={handleDeleteReply}
         />

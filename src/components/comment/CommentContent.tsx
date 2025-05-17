@@ -10,12 +10,8 @@ interface CommentContentProps {
 const CommentContent = ({ content, images = [] }: CommentContentProps) => {
 
   const renderText = (text: string) => {
-    return text.split('\n').map((line, i) => (
-      <span key={i}>
-        {line}
-        {i < text.split('\n').length - 1 && <br />}
-      </span>
-    ));
+    const htmlWithLineBreaks = text.replace(/\n/g, '<br />');
+    return <div dangerouslySetInnerHTML={{ __html: htmlWithLineBreaks }} />;
   };
 
   return (
