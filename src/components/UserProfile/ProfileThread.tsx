@@ -105,12 +105,12 @@ const ProfileThreadItem: React.FC<ThreadItemProps> = ({ thread, isCurrentUser, o
               </span>
               <span className="flex items-center gap-1">
                 <FaRegComment className="w-3 h-3" />
-                {thread.replyCount || 0}
+                {thread.total_dislikes || 0}
               </span>
             </div>
             <span className="flex items-center gap-1">
               <FaRegClock className="w-3 h-3" />
-              {formatRelativeDate(thread.created_at || thread.publish_date)}
+              {formatRelativeDate(thread.publish_date)}
             </span>
           </div>
         </div>

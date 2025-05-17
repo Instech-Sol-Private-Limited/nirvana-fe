@@ -10,8 +10,8 @@ import { Comment, Reply } from '@/types';
 
 interface CommentsProps {
   threadId: string;
-  threadsStats: any;
-  setThreadsStats: any;
+  threadsStats?: any;
+  setThreadsStats?: any;
 }
 
 export default function Comments({ threadId, threadsStats, setThreadsStats }: CommentsProps) {
