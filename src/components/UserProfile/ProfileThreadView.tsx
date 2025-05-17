@@ -5,25 +5,21 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { formatRelativeDate } from '@/utils';
 import { Thread } from '@/types';
-import { getThreadDetails } from '@/utils/threads'; // Reuse the utility function
+import { getThreadDetails } from '@/utils/threads';
 import {
   FaRegSadTear,
   FaArrowLeft,
-  FaThumbtack,
-  FaCheck,
   FaRegClock,
   FaRegThumbsUp,
   FaThumbsUp,
   FaThumbsDown,
   FaRegThumbsDown,
   FaRegComment,
-  FaRegBookmark,
-  FaBookmark,
 } from 'react-icons/fa';
 import Comments from '@/components/comment/Comments';
 import CommentInput from '@/components/comment/CommentInput';
 import ThreadActions from '@/components/threads/ThreadActions';
-import DeleteThreadModal from '@/components/comment/DeleteCommentModal';
+import DeleteThreadModal from '@/components/dialogs/DeleteCommentModal';
 
 interface ProfileThreadViewProps {
   threadId: string;
@@ -38,25 +34,6 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
   const [isDisliked, setIsDisliked] = useState(false);
   const [dislikeCount, setDislikeCount] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Fetch thread details using the shared utility function
-  useEffect(() => {
-    const fetchThreadDetails = async () => {
-      try {
-        const response = await getThreadDetails(threadId);
-        if (response.success) {
-          setThreadData(response.data.thread);
-          setLikeCount(response.data.thread.total_likes || 0);
-        }
-      } catch (error) {
-        console.error('Error fetching thread details:', error);
-      }
-    };
-
-    if (threadId) {
-      fetchThreadDetails();
-    }
-  }, [threadId]);
 
   const handleLikeToggle = () => {
     if (isLiked) {
@@ -97,6 +74,24 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
     }
   };
 
+  const fetchThreadDetails = async () => {
+    try {
+      const response = await getThreadDetails(threadId);
+      if (response.success) {
+        setThreadData(response.data.thread);
+        setLikeCount(response.data.thread.total_likes || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching thread details:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (threadId) {
+      fetchThreadDetails();
+    }
+  }, [threadId]);
+
   if (!threadData) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-10">
@@ -119,9 +114,9 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
 
   const threadActions = isCurrentUser
     ? [
-        { label: 'Edit Thread', onClick: handleEditThread },
-        { label: 'Delete Thread', onClick: () => setShowDeleteModal(true) },
-      ]
+      { label: 'Edit Thread', onClick: handleEditThread },
+      { label: 'Delete Thread', onClick: () => setShowDeleteModal(true) },
+    ]
     : [];
 
   return (
@@ -221,9 +216,8 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
               <div className="flex items-center gap-4">
                 <button
                   onClick={handleLikeToggle}
-                  className={`flex items-center gap-2 ${
-                    isLiked ? 'text-teal-400' : 'text-gray-400'
-                  } hover:text-teal-400 transition-colors`}
+                  className={`flex items-center gap-2 ${isLiked ? 'text-teal-400' : 'text-gray-400'
+                    } hover:text-teal-400 transition-colors`}
                 >
                   {isLiked ? (
                     <FaThumbsUp className="h-5 w-5 fill-current" />
@@ -235,9 +229,8 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
 
                 <button
                   onClick={handleDislikeToggle}
-                  className={`flex items-center gap-2 ${
-                    isDisliked ? 'text-gray-400' : 'text-gray-400'
-                  } hover:text-gray-400 transition-colors`}
+                  className={`flex items-center gap-2 ${isDisliked ? 'text-gray-400' : 'text-gray-400'
+                    } hover:text-gray-400 transition-colors`}
                 >
                   {isDisliked ? (
                     <FaThumbsDown className="h-5 w-5 fill-current" />
@@ -249,7 +242,7 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
 
                 <div className="flex items-center gap-2 text-gray-400">
                   <FaRegComment className="h-5 w-5 fill-current" />
-                  <span>{threadData.replyCount || 0}</span>
+                  <span>{threadData.total_dislikes || 0}</span>
                 </div>
               </div>
             </div>
@@ -260,7 +253,7 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
       <div className="mt-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-white">
-            Comments ({threadData?.replyCount || 0})
+            Comments ({threadData?.total_dislikes || 0})
           </h2>
 
           <div className="flex items-center gap-2">
@@ -274,7 +267,7 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
         </div>
 
         <div className="bg-gray-800 rounded-xl p-4 mb-8 border border-gray-700">
-          <CommentInput threadId={threadId} />
+          <CommentInput fetchComments={fetchThreadDetails} threadId={threadId} />
         </div>
 
         <Comments threadId={threadId} />

@@ -68,12 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         last_name: null,
         role: null,
     });
+    
     const [authData, setAuthData] = useState<AuthData>({
         userId: null,
         accessToken: null,
         role: null
     });
-
 
     const updateAuthData = (partial: Partial<AuthData>) => {
         setAuthData((prev) => ({ ...prev, ...partial }));
@@ -82,13 +82,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const fetchSessionData = async () => {
         setLoading(true);
         try {
-            const sessionRes = await getSession();
-            if (!sessionRes.success || !sessionRes.data) {
+            const response = await getSession();
+            if (!response.success || !response.data) {
                 setAuthData({ userId: null, accessToken: null, role: null });
                 return;
             }
 
-            const session = sessionRes.data;
+            const session = response.data;
 
             const userRes = await getUser();
             // @ts-ignore
@@ -141,8 +141,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     last_name: response.last_name ?? null,
                     role: response.role === 'guest' ? 'user' : response.role,
                 });
-
-                console.log("Profile fetched:", response);
             } else {
                 console.warn("No profile found for user ID:", authData.userId);
             }
@@ -167,7 +165,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         });
 
-        // Safe unsubscribe
         return () => {
             subscriptionData?.subscription?.unsubscribe?.();
         };

@@ -1,7 +1,3 @@
-import { Comment, User } from '@/types';
-import { comments, users } from '@/constants';
-
-
 export function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -35,7 +31,6 @@ export function formatRelativeDate(dateString: string): string {
   return `${diffInYears} ${diffInYears === 1 ? 'year' : 'years'} ago`;
 }
 
-
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
@@ -43,51 +38,4 @@ export function formatDate(dateString: string): string {
     day: 'numeric',
     year: 'numeric'
   });
-}
-
-export function getCommentsForThread(threadId: string): Comment[] {
-  return comments.filter(comment => comment.threadId === threadId && !comment.parentId);
-}
-
-export function getRepliesForComment(commentId: string): Comment[] {
-  return comments.filter(comment => comment.parentId === commentId);
-}
-
-
-export function toggleCommentLike(commentId: string, userId: string): boolean {
-  const comment = comments.find(c => c.id === commentId);
-  if (!comment) return false;
-
-
-  comment.likeCount += 1;
-  return true;
-}
-
-
-export function toggleCommentDislike(commentId: string, userId: string): boolean {
-  const comment = comments.find(c => c.id === commentId);
-  if (!comment) return false;
-
-
-  comment.dislikeCount += 1;
-  return true;
-}
-
-
-export function markAsAcceptedAnswer(commentId: string, threadId: string): boolean {
-
-  comments
-    .filter(c => c.threadId === threadId && c.isAcceptedAnswer)
-    .forEach(c => c.isAcceptedAnswer = false);
-
-
-  const comment = comments.find(c => c.id === commentId);
-  if (!comment) return false;
-
-  comment.isAcceptedAnswer = true;
-  return true;
-}
-
-export function getUserById(userId: string): User | undefined {
-  return users.find(user => user.id === userId);
 }

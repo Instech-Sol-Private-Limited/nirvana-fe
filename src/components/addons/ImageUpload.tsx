@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { FiUploadCloud, FiX } from 'react-icons/fi';
 import { FormikTouched } from 'formik';
+import Image from 'next/image';
 
 interface ImageUploadProps {
     name: string;
@@ -15,6 +16,7 @@ interface ImageUploadProps {
     onChange: (files: File[], previews: string[]) => void;
     onBlur?: (e: React.FocusEvent) => void;
     disabled?: boolean;
+    isComment?: boolean;
     className?: string;
     dropzoneText?: string;
     dropzoneSubText?: string;
@@ -32,6 +34,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     multiple = true,
     value = [],
     previews = [],
+    isComment,
     onChange,
     onBlur,
     disabled = false,
@@ -168,28 +171,27 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             )}
 
             {previews?.length > 0 && (
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
+                <div className="w-full flex items-center flex-wrap gap-4 mt-4">
                     {previews.map((preview, index) => (
-                        <div key={index} className="relative group">
-                            <div className="rounded-lg overflow-hidden bg-gray-800 aspect-square relative">
-                                <img
-                                    src={preview}
-                                    alt={`Preview ${index + 1}`}
-                                    className="object-cover w-full h-full"
-                                />
-                                {!disabled && (
-                                    <div className="absolute inset-0 bg-black/70 bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                        <button
-                                            type="button"
-                                            onClick={() => removeImage(index)}
-                                            className="p-1 bg-red-600 rounded-full cursor-pointer hover:bg-red-700 transition-colors duration-300"
-                                            disabled={disabled}
-                                        >
-                                            <FiX className="h-5 w-5 text-white" />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                        <div key={index} className={`group h-[90px] aspect-square rounded-lg overflow-hidden bg-gray-800  relative`}>
+                            <Image
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                fill
+                                className="!relative object-cover"
+                            />
+                            {!disabled && (
+                                <div className="absolute inset-0 bg-black/70 bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeImage(index)}
+                                        className="p-1 bg-red-600 rounded-full cursor-pointer hover:bg-red-700 transition-colors duration-300"
+                                        disabled={disabled}
+                                    >
+                                        <FiX className="h-5 w-5 text-white" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

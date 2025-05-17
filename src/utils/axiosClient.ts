@@ -8,12 +8,9 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
     (config) => {
-        if (typeof window !== "undefined") {
-            const token = localStorage.getItem("accessToken");
-
-            if (token && config.headers) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
+        const token = localStorage.getItem("accessToken");
+        if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
 
         return config;
@@ -37,6 +34,7 @@ apiClient.interceptors.response.use(
         }
         if (error.response?.status === 401) {
             console.error("Unauthorized access - please login again");
+            localStorage.removeItem("accessToken");
         }
 
         return Promise.reject(error);

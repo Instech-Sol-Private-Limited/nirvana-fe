@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { currentUser } from '@/constants';
 import { logo } from '../../../public';
 import { FiUser, FiLogOut, FiMessageSquare, FiSettings, FiSearch, FiBell } from 'react-icons/fi';
 import { PiUserCircleDashed } from 'react-icons/pi';
@@ -35,7 +34,6 @@ const Navbar: React.FC = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchValue(e.target.value);
   };
-  
   
   const goToUserProfile = () => {
     if (userData?.id) {

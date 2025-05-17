@@ -36,12 +36,8 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
             .required('Content is required')
             .min(30, 'Content must be at least 30 characters'),
         category: Yup.string().required('Please select a category'),
-        tags: Yup.array()
-            .min(1, 'At least one tag is required')
-            .max(5, 'Maximum 5 tags allowed'),
-        images: Yup.array()
-            .min(1, 'At least one image is required')
-            .max(5, 'Maximum 5 images allowed')
+        tags: Yup.array().max(5, 'Maximum 5 tags allowed'),
+        images: Yup.array().max(5, 'Maximum 5 images allowed')
     });
 
     const formik = useFormik({
@@ -69,8 +65,6 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                     })
                 );
 
-
-                console.log(imageUrls)
                 const updatedValues = {
                     title: values.title,
                     description: values.content,
@@ -109,7 +103,6 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                 setSubmitting(false);
             }
         },
-
     });
 
     const handleAddTag = () => {
