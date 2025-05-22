@@ -20,15 +20,15 @@ export default function UserNameWithBadges({
 }: UserNameWithBadgesProps) {
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     async function loadBadges() {
       if (!userId) return;
-      
+
       try {
         setLoading(true);
         const response = await getUserBadges(userId);
-        
+
         if (response.success) {
           setBadges(response.data.badges);
         }
@@ -38,31 +38,33 @@ export default function UserNameWithBadges({
         setLoading(false);
       }
     }
-    
+
     loadBadges();
   }, [userId]);
-  
+
   const visibleBadges = badges.slice(0, maxBadges);
-  
+
   return (
-    <span className={`flex items-center gap-2 ${className}`}>
+    <span className={`flex items-center gap-2`}>
       <span className="capitalize font-medium">{username}</span>
-      
-      {loading ? (
-        <span className="h-5 w-16 bg-gray-700 rounded-full animate-pulse"></span>
-      ) : (
-        visibleBadges.map((badge) => (
-          <Badge
-            key={badge.id}
-            name={badge.name}
-            description={badge.description}
-            icon={badge.icon}
-            color={badge.color}
-            background={badge.background}
-            size={size}
-          />
-        ))
-      )}
+
+      <span className={`${className}`}>
+        {loading ? (
+          <span className="h-5 w-16 bg-gray-700 rounded-full animate-pulse"></span>
+        ) : (
+          visibleBadges.map((badge) => (
+            <Badge
+              key={badge.id}
+              name={badge.name}
+              description={badge.description}
+              icon={badge.icon}
+              color={badge.color}
+              background={badge.background}
+              size={size}
+            />
+          ))
+        )}
+      </span>
     </span>
   );
 }

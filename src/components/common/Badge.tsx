@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   FaUserPlus, 
@@ -39,26 +38,39 @@ export default function Badge({
   const id = `badge-${name.toLowerCase().replace(/\s+/g, '-')}`;
   
   const sizeClasses = {
-    sm: 'text-xs py-0.5 px-1.5',
-    md: 'text-xs py-1 px-2',
-    lg: 'text-sm py-1.5 px-3',
+    sm: 'text-xs py-0.5 px-2',
+    md: 'text-sm py-1 px-3',
+    lg: 'text-base py-2 px-4',
   };
 
   return (
     <>
       <span 
-  id={tooltip ? id : undefined}
-  className={`
-    inline-flex items-center gap-1 rounded-full font-semibold
-    border-2
-    ${sizeClasses[size]} 
-    ${color} ${background} ${className}
-    animate-badge-pulse
-  `}
->
-  {ICON_MAP[icon] || null}
-  <span className="font-medium">{name}</span>
-</span>
+        id={tooltip ? id : undefined}
+        className={`
+          inline-flex items-center gap-2 rounded-full font-semibold
+          border-2 shadow-md relative overflow-hidden
+          ${sizeClasses[size]} 
+          ${color} ${background} ${className}
+          animate-badge-pulse
+          transition-all duration-300
+          hover:scale-105 hover:shadow-lg
+        `}
+        style={{
+          borderColor: 'rgba(20,184,166,0.7)', // teal border fallback
+        }}
+      >
+        
+        <span className="absolute inset-0 pointer-events-none rounded-full opacity-30"
+          style={{
+            background: 'linear-gradient(90deg,rgba(255,255,255,0.15),rgba(20,184,166,0.15))'
+          }}
+        />
+        <span className="relative flex items-center">
+          <span className="mr-1 text-lg opacity-90">{ICON_MAP[icon] || null}</span>
+          <span className="font-bold drop-shadow relative z-10">{name}</span>
+        </span>
+      </span>
       
       {tooltip && description && (
         <Tooltip 

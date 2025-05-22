@@ -61,7 +61,7 @@ export default function YourThreads() {
     }
 
     return (
-        <div className="w-4/5 mx-auto px-4 sm:px-0 py-6 mt-16">
+        <div className="w-4/5 mx-auto px-4 sm:px-0 py-6">
             <button
                 onClick={() => router.back()}
                 className="mb-6 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition flex items-center gap-2"
