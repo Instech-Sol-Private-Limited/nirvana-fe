@@ -9,8 +9,8 @@ import { FaEdit, FaRegCalendarAlt, FaRegUser, FaCamera } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import { updateUserProfile } from '@/utils/profiles';
-import UserBadges from '@/components/common/UserBadge';
 
+import UserNameWithBadges from '../common/UsernameWithBadge';
 export default function UserProfile() {
   const params = useParams();
   const { userData, loading } = useAuth();
@@ -341,16 +341,13 @@ export default function UserProfile() {
 
                   <div className="mb-6">
                     <h1 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-                      {profileData.first_name} {profileData.last_name}
-
-                      <UserBadges
-                        userId={profileData.id}
-                        displayMode="inline"
-                        maxDisplay={2}
-                        size="sm"
-                        className="ml-2"
-                      />
-
+                      <span className="">
+                        <UserNameWithBadges
+                          userId={profileData.id}
+                          username={`${profileData.first_name} ${profileData.last_name}`}
+                          className="text-blue-500 font-medium"
+                        />
+                      </span>
                     </h1>
                     <h3 className="text-lg font-medium text-white mb-2">Email</h3>
                     <p className="text-gray-300">{profileData.email}</p>

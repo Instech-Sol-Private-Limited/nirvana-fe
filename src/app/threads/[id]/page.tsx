@@ -19,7 +19,8 @@ import {
   FaRegComment,
 } from 'react-icons/fa';
 import Comments from '@/components/comment/Comments';
-
+import UserNameWithBadges
+  from '@/components/common/UsernameWithBadge';
 export default function ThreadDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -182,13 +183,13 @@ export default function ThreadDetailPage() {
                 </div>
 
                 <div className="flex items-center text-sm text-gray-400">
-                  <div className="text-teal-400 hover:text-teal-300 font-medium">
-                    {threadData.author_name}
-                  </div>
+                  <UserNameWithBadges
+                    userId={threadData.author_id}
+                    username={threadData.author_name}
+                    className="text-teal-400 hover:text-teal-300 font-medium"
+                  />
 
-                  <span className='text-green-400 bg-green-400/10 px-2 text-center text-xs font-normal py-1 rounded-full'>
-                    1st Post
-                  </span>
+                  
                   <span className="mx-2 text-gray-600">•</span>
                   <span className="flex items-center">
                     <FaRegClock className="h-3 w-3 mr-1 text-gray-500" />
