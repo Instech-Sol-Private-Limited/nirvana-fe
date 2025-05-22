@@ -70,11 +70,11 @@ export default function CommentInput({ threadId, fetchComments, parentId = null,
         setIsExpanded(false);
         setShowImageUpload(false);
       } else {
-        toast.success(response.message);
+        toast.error(response.message);
       }
     } catch (error) {
       // @ts-ignore
-      toast.success(error && error.message || "Something went wrong!");
+      toast.error(error && error.message || "Something went wrong!");
     } finally {
       setIsSubmitting(false);
     }

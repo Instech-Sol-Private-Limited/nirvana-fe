@@ -67,7 +67,7 @@ export default function Badge({
           }}
         />
         <span className="relative flex items-center">
-          <span className="mr-1 text-lg opacity-90">{ICON_MAP[icon] || null}</span>
+          <span className="mr-1 text-xs opacity-90">{ICON_MAP[icon] || null}</span>
           <span className="font-bold drop-shadow relative z-10">{name}</span>
         </span>
       </span>

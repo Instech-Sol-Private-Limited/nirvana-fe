@@ -50,6 +50,8 @@ console.log('Fetching badges for user:', userId);
     if (error) {
       throw error;
     }
+    console.log('Raw badges data:', JSON.stringify(data, null, 2));
+
 console.log('Badges data:', data);
     
     const badges: UserBadge[] = (data ?? [])

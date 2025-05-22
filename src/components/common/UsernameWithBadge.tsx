@@ -21,28 +21,28 @@ export default function UserNameWithBadges({
   const [badges, setBadges] = useState<UserBadge[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadBadges() {
-      if (!userId) return;
+  async function loadBadges() {
+    if (!userId) return;
 
-      try {
-        setLoading(true);
-        const response = await getUserBadges(userId);
+    try {
+      setLoading(true);
+      const response = await getUserBadges(userId);
 
-        if (response.success) {
-          setBadges(response.data.badges);
-        }
-      } catch (error) {
-        console.error('Error loading badges:', error);
-      } finally {
-        setLoading(false);
+      if (response.success) {
+        setBadges(response.data.badges);
       }
+    } catch (error) {
+      console.error('Error loading badges:', error);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadBadges();
   }, [userId]);
 
-  const visibleBadges = badges.slice(0, maxBadges);
+  const visibleBadges = badges;
 
   return (
     <span className={`flex items-center gap-2`}>
