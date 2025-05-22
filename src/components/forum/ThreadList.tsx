@@ -10,7 +10,7 @@ import ThreadActions from '../threads/ThreadActions';
 import AddThreadModal from '../dialogs/AddThreadModal';
 import DeleteThreadModal from '../dialogs/DeleteThreadModal';
 import { useAuth } from '@/context/AuthProvider';
-
+import UserNameWithBadges from '@/components/common/UsernameWithBadge';
 interface ThreadListProps {
   threads: Thread[];
   isLoading?: boolean;
@@ -93,7 +93,10 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, isLoading = false, onN
                       </h3>
 
                       <div className="flex flex-wrap items-center mt-1 text-xs text-gray-400 gap-x-2 gap-y-1">
-                        <span className="text-teal-500 font-medium">{thread.author_name}</span>
+                        <span className="text-teal-500 font-medium">{thread.author_name}</span> 
+                         <span className='text-green-400 bg-green-400/10 px-2 text-center text-xs font-normal py-1 rounded-full'>
+                          1st Post
+                        </span>
                         <span>•</span>
                         <span>{formatRelativeDate(thread.publish_date)}</span>
                         {thread.category_name && (
@@ -118,7 +121,7 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, isLoading = false, onN
                       </div>
                       <div className="flex items-center gap-1 text-sm">
                         <FaRegComment className="text-gray-400 cursor-pointer" />
-                        <span>{thread.replyCount || 0}</span>
+                        <span>{thread.total_dislikes || 0}</span>
                       </div>
 
                       {thread.author_id === userId && (

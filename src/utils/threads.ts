@@ -182,7 +182,7 @@ const addComment = async (params: AddCommentParams): Promise<ApiResponse<any>> =
 interface UpdateCommentParams {
     comment_id: string;
     content: string;
-    imgs?: string[];
+    imgs?: (string | undefined)[]
 }
 
 const updateComment = async (params: UpdateCommentParams): Promise<ApiResponse<any>> => {
@@ -287,10 +287,9 @@ interface AddReplyParams {
 
 const addReply = async (params: AddReplyParams): Promise<ApiResponse<any>> => {
     try {
-        const response = await apiClient.post(`http://localhost:5000/api/threads/add-reply`, {
+        const response = await apiClient.post(`/threads/add-reply`, {
             content: params.content,
             comment_id: params.comment_id,
-            imgs: params.imgs // Include imgs if provided
         });
         return {
             success: true,
@@ -309,15 +308,15 @@ const addReply = async (params: AddReplyParams): Promise<ApiResponse<any>> => {
 interface UpdateReplyParams {
     comment_id: string;
     content: string;
-    imgs?: string[];
 }
 
 const updateReply = async (params: UpdateReplyParams): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.put(`/threads/update-reply/${params.comment_id}`, {
             content: params.content,
-            imgs: params.imgs
         });
+
+        console.log(response)
         return {
             success: true,
             data: response.data
@@ -384,8 +383,26 @@ const getReplyReactions = async (comment_id: string): Promise<ApiResponse<any>> 
     }
 };
 
+const getThreadsByUserId = async (userId: string, limit: number = 20, offset: number = 0): Promise<ApiResponse<any>> => {
+    try {
+        const response = await apiClient.get(`/threads/get-threads-by-user/${userId}?limit=${limit}&offset=${offset}`);
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+        return {
+            success: false,
+            // @ts-ignore
+            message: error.message || 'An unexpected error occurred'
+        };
+    }
+};
+
+
 export {
     // Thread operations
+    getThreadsByUserId,
     getAllThreads,
     getThreadDetails,
     addNewThread,

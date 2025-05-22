@@ -2,9 +2,10 @@ import supabase from "@/config/supabse";
 
 export const uploadToSupabase = async (file: File) => {
     try {
+
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `blog_images/${fileName}`;
+        const filePath = `threads/${fileName}`;
 
         const { data, error } = await supabase.storage
             .from('blog-images')
@@ -12,7 +13,6 @@ export const uploadToSupabase = async (file: File) => {
                 cacheControl: '3600',
                 upsert: false
             });
-
         if (error) throw error;
 
         const { data: publicUrlData } = supabase.storage

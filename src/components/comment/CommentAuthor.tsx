@@ -1,10 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { Author } from '@/constants/mockData';
 
 interface CommentAuthorProps {
-  author: Author;
+  author: {
+    username: string;
+    avatar: string | null;
+  }
 }
 
 const CommentAuthor = ({ author }: CommentAuthorProps) => {
@@ -12,9 +14,8 @@ const CommentAuthor = ({ author }: CommentAuthorProps) => {
     <Image
       src={author.avatar || "https://avatar.iran.liara.run/public/22"}
       alt={author.username}
-      width={40}
-      height={40}
-      className="object-cover"
+      fill
+      className="!relative object-cover max-w-6 max-h-6 rounded-full"
     />
   );
 };

@@ -1,18 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { ThumbsUp, ThumbsDown, Reply, CheckCircle } from 'lucide-react';
 import CommentAuthor from './CommentAuthor';
 import CommentForm from './CommentForm';
 import CommentContent from './CommentContent';
 import ThreadActions from '@/components/threads/ThreadActions';
 import CommentEditForm from './CommentEditForm';
-import DeleteCommentModal from './DeleteCommentModal';
+import DeleteCommentModal from '../dialogs/DeleteCommentModal';
 import { useAuth } from '@/context/AuthProvider';
 import { updateCommentReaction, addReply } from '@/utils/threads';
-
-// types.ts
+import { toast } from 'react-toastify';
+import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 
 export interface Author {
   id: string;
@@ -22,104 +21,95 @@ export interface Author {
 }
 export interface Comment {
   id: string;
+  thread_id?: string;
+  comment_id?: string;
   content: string;
-  author: Author;
-  createdAt: string;
-  likeCount: number;
-  dislikeCount?: number;
-  isLiked?: boolean;
-  isDisliked?: boolean;
-  isEdited?: boolean;
-  isAcceptedAnswer?: boolean;
-  parentId?: string;
-  images?: string[];
+  total_likes: number;
+  total_dislikes: number;
+  user_name: string;
+  user_id: string;
+  profiles: {
+    avatar_url: string;
+  };
+  created_at: string;
+  updated_at: string;
+  is_edited: boolean;
+  is_deleted?: boolean;
+  is_solution?: boolean;
+  imgs?: string[];
+  has_subcomment?: boolean;
+  user_reaction?: any;
 }
 interface CommentItemProps {
   comment: Comment;
-  isReply?: boolean;
-  onReply: (commentId: string, authorUsername: string) => void;
-  onUpdate?: (commentId: string, text: string) => void;
+  type: "reply" | "comment";
+  reply_to?: string;
+  parentId: string;
+  fetchReplies: (parentId: string) => void;
+  onUpdate: (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => Promise<any>;
   onDelete?: (commentId: string) => void;
-  
 }
 
 const CommentItem = ({
   comment,
-  isReply = false,
-  onReply,
+  type = "comment",
+  parentId,
+  reply_to,
+  fetchReplies,
   onUpdate,
-  onDelete
+  onDelete,
 }: CommentItemProps) => {
-  const [isLiked, setIsLiked] = useState(comment.isLiked || false);
-  const [isDisliked, setIsDisliked] = useState(comment.isDisliked || false);
-  const [likeCount, setLikeCount] = useState(comment.likeCount);
-  const [dislikeCount, setDislikeCount] = useState(comment.dislikeCount || 0);
+  const [isLiked, setIsLiked] = useState(comment.user_reaction === 'like');
+  const [isDisliked, setIsDisliked] = useState(comment.user_reaction === 'dislike');
+  const [likeCount, setLikeCount] = useState(comment.total_likes);
+  const [dislikeCount, setDislikeCount] = useState(comment.total_dislikes || 0);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [replySubmitting, setReplySubmitting] = useState(false);
-  
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { userId } = useAuth();
-  
-  const isAuthor = userId === comment.author.id;
+  const isAuthor = userId === comment.user_id;
 
   const handleLikeToggle = async () => {
     try {
-     
       const reaction = isLiked ? 'none' : 'like';
       const response = await updateCommentReaction(comment.id, reaction);
-      
+
       if (response.success) {
-        if (isLiked) {
-          setLikeCount(likeCount - 1);
-          setIsLiked(false);
-        } else {
-          if (isDisliked) {
-            setDislikeCount(dislikeCount - 1);
-            setIsDisliked(false);
-          }
-          setLikeCount(likeCount + 1);
-          setIsLiked(true);
+        setIsLiked(!isLiked);
+        setLikeCount((prev) => prev + (isLiked ? -1 : 1));
+
+        if (isDisliked) {
+          setIsDisliked(false);
+          setDislikeCount((prev) => prev - 1);
         }
-      } else {
-        console.error("Failed to update reaction:", response.message);
       }
     } catch (error) {
-      console.error("Error updating reaction:", error);
+      console.error('Error updating reaction:', error);
     }
   };
 
   const handleDislikeToggle = async () => {
     try {
-      
       const reaction = isDisliked ? 'none' : 'dislike';
       const response = await updateCommentReaction(comment.id, reaction);
-      
+
       if (response.success) {
-        if (isDisliked) {
-          setDislikeCount(dislikeCount - 1);
-          setIsDisliked(false);
-        } else {
-          if (isLiked) {
-            setLikeCount(likeCount - 1);
-            setIsLiked(false);
-          }
-          setDislikeCount(dislikeCount + 1);
-          setIsDisliked(true);
+        setIsDisliked(!isDisliked);
+        setDislikeCount((prev) => prev + (isDisliked ? -1 : 1));
+
+        if (isLiked) {
+          setIsLiked(false);
+          setLikeCount((prev) => prev - 1);
         }
-      } else {
-        console.error("Failed to update reaction:", response.message);
       }
     } catch (error) {
-      console.error("Error updating reaction:", error);
+      console.error('Error updating reaction:', error);
     }
   };
 
   const handleReplyClick = () => {
     setShowReplyForm(!showReplyForm);
-    if (!showReplyForm) {
-      onReply(comment.id, comment.author.username);
-    }
   };
 
   const handleCancelReply = () => {
@@ -127,55 +117,82 @@ const CommentItem = ({
   };
 
   const handleSubmitReply = async (text: string) => {
-  try {
-    setReplySubmitting(true);
-    
-    const response = await addReply({
-      comment_id: comment.id,
-      content: text
-    });
-    
-    if (response.success) {
-      console.log(`Reply added successfully to ${isReply ? 'reply' : 'comment'} ${comment.id}`);
-      
-      
-      onReply(comment.id, comment.author.username);
-      setShowReplyForm(false);
-      
-     
-      const refreshEvent = new CustomEvent('refreshComments', {
-        detail: { commentId: comment.id }
+    try {
+      setReplySubmitting(true);
+
+      const response = await addReply({
+        comment_id: parentId,
+        content: text,
       });
-      window.dispatchEvent(refreshEvent);
-    } else {
-      console.error("Failed to add reply:", response.message);
+
+      if (response.success) {
+        fetchReplies(parentId);
+        toast.success(response.data.message)
+        setShowReplyForm(false);
+      } else {
+        console.error('Failed to add reply:', response.message);
+      }
+    } catch (error) {
+      console.error('Error adding reply:', error);
+    } finally {
+      setReplySubmitting(false);
     }
-  } catch (error) {
-    console.error("Error adding reply:", error);
-  } finally {
-    setReplySubmitting(false);
-  }
-};
-  
+  };
+
   const handleEditComment = () => {
     setIsEditing(true);
   };
-  
+
   const handleCancelEdit = () => {
     setIsEditing(false);
   };
-  
-  const handleSubmitEdit = (text: string) => {
-    if (onUpdate) {
-      onUpdate(comment.id, text);
+
+  const handleSubmitEdit = async ({
+    content,
+    images,
+    previews
+  }: {
+    content: string;
+    images: File[];
+    previews: string[];
+  }) => {
+    try {
+      const imageUrls = await Promise.all(
+        previews?.map(async (preview, index) => {
+          if (preview.startsWith('http')) {
+            return preview;
+          } else {
+            const file = images[index]
+            console.log(file)
+            const url = await uploadToSupabase(file);
+            return url;
+          }
+        })
+      );
+
+      const updatedCommentValues = {
+        comment_id: comment.id,
+        content,
+        imgs: imageUrls ? imageUrls : [],
+      };
+
+      const response = await onUpdate(updatedCommentValues);
+      if (response.success) {
+        toast.success('Comment updated successfully!');
+      } else {
+        toast.error(response.message || 'Failed to update comment.');
+      }
+    } catch (error) {
+      toast.error('Something went wrong');
+    } finally {
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
-  
+
   const handleDeleteComment = () => {
     setShowDeleteModal(true);
   };
-  
+
   const confirmDelete = () => {
     if (onDelete) {
       onDelete(comment.id);
@@ -184,121 +201,112 @@ const CommentItem = ({
   };
 
   return (
-    <div className={`${isReply ? 'ml-0 sm:ml-6 pl-3 sm:pl-4 border-l border-gray-700/40' : ''} mb-4`}>
+    <div className={`${type === "reply" ? 'ml-0 sm:ml-12 pl-5 sm:pl-4 border-l-2 border-teal-500' : ''} mb-4`}>
       <div className="flex gap-3">
-        <Link href={`/users/${comment.author.id}`} className="flex-shrink-0">
-          <div className="w-10 h-10 rounded-full overflow-hidden">
-            <CommentAuthor author={comment.author} />
-          </div>
-        </Link>
-
         <div className="flex-1">
           {isEditing ? (
-            <CommentEditForm 
+            <CommentEditForm
               initialContent={comment.content}
+              type={"reply"}
+              placeholder={`Reply to ${comment.user_name}...`}
+              initialImages={comment.imgs}
               onSubmit={handleSubmitEdit}
               onCancel={handleCancelEdit}
             />
           ) : (
-            <div className="bg-gray-750 rounded-2xl p-4">
+            <div className={`bg-gray-750 rounded-2xl p-4 border ${type === "reply" ? 'border-white/10' : 'bg-white/5 border-transparent'}`}>
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center">
-                  <Link href={`/users/${comment.author.id}`} className="text-white font-medium hover:text-teal-400 transition-colors">
-                    {comment.author.username}
-                  </Link>
+                <div className="flex items-center gap-3">
+                  <CommentAuthor author={{ avatar: comment.profiles?.avatar_url, username: comment.user_name }} />
+                  <div className="flex-grow flex items-center gap-3">
+                    <h3 className="text-white capitalize font-medium hover:text-teal-400 transition-colors">
+                      {comment.user_name}
+                      <span className='text-yellow-400 ml-2 bg-yellow-400/10 px-2 text-center text-xs font-normal py-1 rounded-full'>
+                        Community Helper
+                      </span>
+                      {comment.is_edited && <span className="ml-2 text-xs text-gray-500 italic">(edited)</span>}
+                    </h3>
 
-                  {comment.author.role && (
-                    <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-gray-700 text-teal-400">
-                      {comment.author.role}
-                    </span>
-                  )}
-
-                  {comment.isAcceptedAnswer && (
-                    <span className="ml-2 flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-900/40 text-green-300">
-                      <CheckCircle className="h-3 w-3" />
-                      Solution
-                    </span>
-                  )}
-
-                  {comment.isEdited && (
-                    <span className="ml-2 text-xs text-gray-500 italic">edited</span>
-                  )}
+                    {type !== "reply" && comment.is_solution && (
+                      <span className="ml-2 flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-900/40 text-green-300">
+                        <CheckCircle className="h-3 w-3" />
+                        Solution
+                      </span>
+                    )}
+                  </div>
                 </div>
-                
+
                 <div className="flex items-center">
                   <span className="text-xs text-gray-400 mr-2">
-                    {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                    {new Date(comment.created_at).toLocaleDateString('en-US', {
                       day: 'numeric',
                       month: 'short',
-                      year: 'numeric'
+                      year: 'numeric',
                     })}
                   </span>
-                  
+
                   {isAuthor && (
                     <ThreadActions
-                      targetType={isReply ? 'reply' : 'comment'}
+                      targetType={type}
                       targetId={comment.id}
                       actions={[
-                        {
-                          label: "Edit Comment",
-                          onClick: handleEditComment
-                        },
-                        {
-                          label: "Delete Comment",
-                          onClick: handleDeleteComment
-                        },
+                        { label: 'Edit', onClick: handleEditComment },
+                        { label: 'Delete', onClick: handleDeleteComment },
                       ]}
                     />
                   )}
                 </div>
               </div>
 
-              <CommentContent content={comment.content} images={isReply ? undefined : comment.images} />
-            </div>
-          )}
+              <div className="pl-8">
+                <CommentContent content={comment.content} images={type === "reply" ? undefined : comment.imgs} />
 
-          {!isEditing && (
-            <div className="flex items-center gap-4 mt-2 pl-2">
-              <button
-                onClick={handleLikeToggle}
-                className={`flex items-center gap-1 text-xs ${isLiked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
-              >
-                <ThumbsUp className="h-4 w-4" fill={isLiked ? "currentColor" : "none"} />
-                <span>{likeCount}</span>
-              </button>
+                {/* {comment.is_edited && ( */}
+                <div className="w-full flex items-center gap-4 mt-5 pl-2">
+                  <button
+                    onClick={handleLikeToggle}
+                    className={`flex items-center gap-1 text-xs ${isLiked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
+                  >
+                    <ThumbsUp className="h-4 w-4" fill={isLiked ? 'currentColor' : 'none'} />
+                    <span>{likeCount}</span>
+                  </button>
 
-              <button
-                onClick={handleDislikeToggle}
-                className={`flex items-center gap-1 text-xs ${isDisliked ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-600 transition-colors`}
-              >
-                <ThumbsDown className="h-4 w-4" fill={isDisliked ? "currentColor" : "none"} />
-                <span>{dislikeCount}</span>
-              </button>
+                  <button
+                    onClick={handleDislikeToggle}
+                    className={`flex items-center gap-1 text-xs ${isDisliked ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-600 transition-colors`}
+                  >
+                    <ThumbsDown className="h-4 w-4" fill={isDisliked ? 'currentColor' : 'none'} />
+                    <span>{dislikeCount}</span>
+                  </button>
 
-              <button
-                onClick={handleReplyClick}
-                className="flex items-center gap-1 text-xs text-gray-400 hover:text-teal-400 transition-colors"
-              >
-                <Reply className="h-4 w-4" />
-                Reply
-              </button>
-            </div>
-          )}
+                  <button
+                    onClick={handleReplyClick}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-teal-400 transition-colors"
+                  >
+                    <Reply className="h-4 w-4" />
+                    Reply
+                  </button>
+                </div>
+                {/* )} */}
 
-          {showReplyForm && (
-            <div className="mt-3 pl-2">
-              <CommentForm 
-                placeholder={`Reply to ${comment.author.username}...`}
-                onSubmit={handleSubmitReply}
-                onCancel={handleCancelReply}
-                isSubmitting={replySubmitting}
-              />
+                {showReplyForm && (
+                  <div className="mt-3 pl-2">
+                    <CommentForm
+                      reply_to={reply_to}
+                      placeholder={`Reply to ${reply_to ? reply_to : comment.user_name}...`}
+                      onSubmit={handleSubmitReply}
+                      onCancel={handleCancelReply}
+                      isSubmitting={replySubmitting}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
       </div>
-      
-      <DeleteCommentModal 
+
+      <DeleteCommentModal
         isOpen={showDeleteModal}
         setIsOpen={setShowDeleteModal}
         onConfirm={confirmDelete}

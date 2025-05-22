@@ -28,6 +28,7 @@ type userData = {
     id: string | null;
     last_name: string | null;
     role: 'superadmin' | 'admin' | 'user' | null;
+    created_at?: string | null;
 };
 
 type AuthContextType = AuthData & {
@@ -67,13 +68,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: null,
         last_name: null,
         role: null,
+        created_at: null,
     });
+    
     const [authData, setAuthData] = useState<AuthData>({
         userId: null,
         accessToken: null,
         role: null
     });
-
 
     const updateAuthData = (partial: Partial<AuthData>) => {
         setAuthData((prev) => ({ ...prev, ...partial }));
@@ -82,14 +84,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const fetchSessionData = async () => {
         setLoading(true);
         try {
-            const sessionRes = await getSession();
-            if (!sessionRes.success || !sessionRes.data) {
+            const response = await getSession();
+            if (!response.success || !response.data) {
                 setAuthData({ userId: null, accessToken: null, role: null });
                 return;
             }
 
-            const session = sessionRes.data;
-
+            const session = response.data;
             const userRes = await getUser();
             // @ts-ignore
             const currentUser = userRes.data?.user;
@@ -140,9 +141,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     id: response.id ?? null,
                     last_name: response.last_name ?? null,
                     role: response.role === 'guest' ? 'user' : response.role,
+                    created_at: response.created_at ?? null,
                 });
-
-                console.log("Profile fetched:", response);
             } else {
                 console.warn("No profile found for user ID:", authData.userId);
             }
@@ -154,23 +154,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         fetchSessionData();
 
-        const { data: subscriptionData } = onAuthStateChange(async (_event, session) => {
-            if (session) {
-                const profile = await getProfile(session.user.id);
-                updateAuthData({
-                    userId: session.user.id,
-                    accessToken: session.access_token || null,
-                    role: profile?.role || 'user'
-                });
-            } else {
-                setAuthData({ userId: null, accessToken: null, role: null });
-            }
-        });
+        // const { data: subscriptionData } = onAuthStateChange(async (_event, session) => {
+        //     if (session) {
+        //         const profile = await getProfile(session.user.id);
+        //         updateAuthData({
+        //             userId: session.user.id,
+        //             accessToken: session.access_token || null,
+        //             role: profile?.role || 'user'
+        //         });
+        //     } else {
+        //         setAuthData({ userId: null, accessToken: null, role: null });
+        //     }
+        // });
 
-        // Safe unsubscribe
-        return () => {
-            subscriptionData?.subscription?.unsubscribe?.();
-        };
+        // return () => {
+        //     subscriptionData?.subscription?.unsubscribe?.();
+        // };
     }, []);
 
     useEffect(() => {

@@ -13,7 +13,7 @@ import {
 } from 'react-icons/fa';
 import { getAllCategories } from '@/utils/categories';
 import { Category, Thread } from '@/types';
-import { uploadToSupabase } from '@/utils/supabsebucket';
+import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import { addNewThread, updateThread } from '@/utils/threads';
 import { toast } from 'react-toastify';
 
@@ -36,12 +36,8 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
             .required('Content is required')
             .min(30, 'Content must be at least 30 characters'),
         category: Yup.string().required('Please select a category'),
-        tags: Yup.array()
-            .min(1, 'At least one tag is required')
-            .max(5, 'Maximum 5 tags allowed'),
-        images: Yup.array()
-            .min(1, 'At least one image is required')
-            .max(5, 'Maximum 5 images allowed')
+        tags: Yup.array().max(5, 'Maximum 5 tags allowed'),
+        images: Yup.array().max(5, 'Maximum 5 images allowed')
     });
 
     const formik = useFormik({
@@ -69,8 +65,6 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                     })
                 );
 
-
-                console.log(imageUrls)
                 const updatedValues = {
                     title: values.title,
                     description: values.content,
@@ -109,7 +103,6 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                 setSubmitting(false);
             }
         },
-
     });
 
     const handleAddTag = () => {
@@ -341,7 +334,7 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                         <button
                             type="button"
                             className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 border border-gray-700 hover:border-gray-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                            onClick={() => router.back()}
+                            onClick={() => setIsOpen(false)}
                         >
                             Cancel
                         </button>
