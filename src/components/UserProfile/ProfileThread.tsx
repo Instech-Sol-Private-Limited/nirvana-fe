@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { formatRelativeDate } from '@/utils';
-import { FaRegClock, FaRegThumbsUp, FaRegThumbsDown, FaRegComment } from 'react-icons/fa';
+import { FaRegThumbsUp, FaRegThumbsDown, FaRegComment } from 'react-icons/fa';
 import { Thread } from '@/types';
 import ThreadActions from '../threads/ThreadActions';
 import DeleteThreadModal from '../dialogs/DeleteThreadModal';
@@ -45,10 +43,7 @@ const ProfileThreadItem: React.FC<ThreadItemProps> = ({ thread, isCurrentUser, o
 
   return (
     <>
-      <div 
-        onClick={handleThreadClick} 
-        className="block cursor-pointer"
-      >
+      <div onClick={handleThreadClick} className="block cursor-pointer">
         <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 hover:border-gray-600 transition-colors hover:shadow-lg">
           <div className="flex justify-between items-start">
             <h3 className="text-lg font-medium text-white mb-2 hover:text-teal-400 transition-colors">
@@ -105,13 +100,10 @@ const ProfileThreadItem: React.FC<ThreadItemProps> = ({ thread, isCurrentUser, o
               </span>
               <span className="flex items-center gap-1">
                 <FaRegComment className="w-3 h-3" />
-                {thread.total_dislikes || 0}
+                {thread.total_likes || 0}
               </span>
             </div>
-            <span className="flex items-center gap-1">
-              <FaRegClock className="w-3 h-3" />
-              {formatRelativeDate(thread.publish_date)}
-            </span>
+
           </div>
         </div>
       </div>
@@ -124,7 +116,7 @@ const ProfileThreadItem: React.FC<ThreadItemProps> = ({ thread, isCurrentUser, o
           if (onThreadUpdated) onThreadUpdated();
         }}
       />
-      
+
       <AddThreadModal
         isOpen={isEditOpen}
         setIsOpen={setIsEditOpen}

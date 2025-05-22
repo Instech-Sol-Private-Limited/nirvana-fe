@@ -10,10 +10,17 @@ import CommentEditForm from './CommentEditForm';
 import DeleteCommentModal from '../dialogs/DeleteCommentModal';
 import { useAuth } from '@/context/AuthProvider';
 import { updateCommentReaction, addReply } from '@/utils/threads';
-import { uploadToSupabase } from '@/utils/supabsebucket';
 import { toast } from 'react-toastify';
+import { uploadToSupabase } from '@/utils/supabsethreadbucket';
+import UserNameWithBadges from '../common/UsernameWithBadge';
 
-interface CommentType {
+export interface Author {
+  id: string;
+  username: string;
+  avatar: string | null;
+  role?: string;
+}
+export interface Comment {
   id: string;
   thread_id?: string;
   comment_id?: string;
@@ -34,9 +41,8 @@ interface CommentType {
   has_subcomment?: boolean;
   user_reaction?: any;
 }
-
 interface CommentItemProps {
-  comment: CommentType;
+  comment: Comment;
   type: "reply" | "comment";
   reply_to?: string;
   parentId: string;
@@ -214,10 +220,11 @@ const CommentItem = ({
                 <div className="flex items-center gap-3">
                   <CommentAuthor author={{ avatar: comment.profiles?.avatar_url, username: comment.user_name }} />
                   <div className="flex-grow flex items-center gap-3">
-                    <h3 className="text-white capitalize font-medium hover:text-teal-400 transition-colors">
-                      {comment.user_name}
-                      {comment.is_edited && <span className="ml-2 text-xs text-gray-500 italic">(edited)</span>}
-                    </h3>
+                    <UserNameWithBadges 
+                      userId={comment.user_id}
+                      username={comment.user_name}
+                      className="text-white hover:text-teal-400 transition-colors"
+                    />
 
                     {type !== "reply" && comment.is_solution && (
                       <span className="ml-2 flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-900/40 text-green-300">

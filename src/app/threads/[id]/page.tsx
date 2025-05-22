@@ -19,7 +19,8 @@ import {
   FaRegComment,
 } from 'react-icons/fa';
 import Comments from '@/components/comment/Comments';
-
+import UserNameWithBadges
+  from '@/components/common/UsernameWithBadge';
 export default function ThreadDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -83,7 +84,7 @@ export default function ThreadDetailPage() {
       if (params && params.id) {
         const response = await getThreadDetails(params.id as string);
         if (response.success) {
-
+          console.log(response.data.thread)
           setThreadData(response.data.thread)
           setThreadId(params.id as string);
         }
@@ -156,7 +157,7 @@ export default function ThreadDetailPage() {
           <div className="border-b border-gray-700 p-6">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 group">
-                <div className="w-12 h-12 rounded-full  ring-2 ring-gray-700 group-hover:ring-teal-500 transition-all">
+                <div className="w-12 h-12 rounded-full  ring-2 ring-gray-700 group-hover:ring-teal-500 transition-all overflow-hidden">
                   <Image
                     src={threadData.profiles.avatar_url}
                     alt={threadData.author_name}
@@ -178,14 +179,17 @@ export default function ThreadDetailPage() {
                     {threadData.category_name}
                   </button>
 
-                  
+
                 </div>
 
                 <div className="flex items-center text-sm text-gray-400">
-                  <div className="text-teal-400 hover:text-teal-300 font-medium">
-                    {threadData.author_name}
-                  </div>
+                  <UserNameWithBadges
+                    userId={threadData.author_id}
+                    username={threadData.author_name}
+                    className="text-teal-400 hover:text-teal-300 font-medium"
+                  />
 
+                  
                   <span className="mx-2 text-gray-600">•</span>
                   <span className="flex items-center">
                     <FaRegClock className="h-3 w-3 mr-1 text-gray-500" />
