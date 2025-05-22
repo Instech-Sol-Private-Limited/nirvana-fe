@@ -10,9 +10,9 @@ import CommentEditForm from './CommentEditForm';
 import DeleteCommentModal from '../dialogs/DeleteCommentModal';
 import { useAuth } from '@/context/AuthProvider';
 import { updateCommentReaction, addReply } from '@/utils/threads';
-import { uploadToSupabase } from '@/utils/supabsebucket';
+import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import { toast } from 'react-toastify';
-
+import UserNameWithBadges from '@/components/common/UsernameWithBadge';
 interface CommentType {
   id: string;
   thread_id?: string;
@@ -216,6 +216,9 @@ const CommentItem = ({
                   <div className="flex-grow flex items-center gap-3">
                     <h3 className="text-white capitalize font-medium hover:text-teal-400 transition-colors">
                       {comment.user_name}
+                      <span className='text-yellow-400 ml-2 bg-yellow-400/10 px-2 text-center text-xs font-normal py-1 rounded-full'>
+                        Community Helper
+                      </span>
                       {comment.is_edited && <span className="ml-2 text-xs text-gray-500 italic">(edited)</span>}
                     </h3>
 

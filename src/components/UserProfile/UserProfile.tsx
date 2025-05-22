@@ -6,22 +6,19 @@ import Image from 'next/image';
 import { formatRelativeDate } from '@/utils';
 import { useAuth } from '@/context/AuthProvider';
 import { FaEdit, FaRegCalendarAlt, FaRegUser, FaCamera } from 'react-icons/fa';
-import ProfileThreadItem from './ProfileThread';
-import { Thread } from '@/types';
-import { getThreadsByUserId } from '@/utils/threads';
 import { toast } from 'react-toastify';
-import { uploadToSupabase } from '@/utils/supabsebucket';
+import { uploadToSupabase } from '@/utils/supabsethreadbucket';
+import { updateUserProfile } from '@/utils/profiles';
+import UserBadges from '@/components/common/UserBadge';
 
 export default function UserProfile() {
   const params = useParams();
   const { userData, loading } = useAuth();
-  const [userThreads, setUserThreads] = useState<Thread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -32,12 +29,10 @@ export default function UserProfile() {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
-  const fileInputRef = useState<HTMLInputElement | null>(null);
-  
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
   useEffect(() => {
-    const userId = params?.id as string;
-    
-    if (userData?.id && (!userId || userId === userData.id)) {
+    if (userData) {
       setIsCurrentUser(true);
       setProfileData(userData);
       setFormData({
@@ -46,71 +41,18 @@ export default function UserProfile() {
         email: userData.email || '',
         avatar_url: userData.avatar_url || '',
       });
-      
+
       if (userData.avatar_url) {
         setAvatarPreview(userData.avatar_url);
       }
-      
-      setIsLoading(false);
-    } else if (userId) {
-      const fetchUserProfile = async () => {
-        try {
-          const response = await fetch(`/api/users/${userId}`);
-          const data = await response.json();
-          
-          if (data.success) {
-            setProfileData(data.user);
-            
-            if (data.user.avatar_url) {
-              setAvatarPreview(data.user.avatar_url);
-            }
-          } else {
-            console.error("Error fetching user profile:", data.message);
-          }
-        } catch (err) {
-          console.error("Error fetching user profile:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      fetchUserProfile();
-    }
-  }, [params, userData]);
 
-  const refreshThreads = async () => {
-    if (!profileData) return;
-    
-    setIsLoading(true);
-    try {
-      const userId = params?.id as string || userData?.id;
-      if (userId) {
-        const response = await getThreadsByUserId(userId, 20, 0);
-        
-        if (response.success && response.data) {
-          setUserThreads(response.data.threads);
-        } else {
-          console.error("Error fetching threads:", response.message);
-          setUserThreads([]);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching user threads:", error);
-      setUserThreads([]);
-    } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (profileData) {
-      refreshThreads();
-    }
-  }, [profileData]);
+  }, [userData]);
 
   const handleEditProfile = () => {
     setIsEditing(true);
-    
+
     if (profileData.avatar_url) {
       setAvatarPreview(profileData.avatar_url);
     } else {
@@ -121,7 +63,7 @@ export default function UserProfile() {
   const handleCancelEdit = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsEditing(false);
-    
+
     if (profileData) {
       setFormData({
         first_name: profileData.first_name || '',
@@ -129,16 +71,15 @@ export default function UserProfile() {
         email: profileData.email || '',
         avatar_url: profileData.avatar_url || '',
       });
-      
-      // Reset avatar preview
+
       if (profileData.avatar_url) {
         setAvatarPreview(profileData.avatar_url);
       } else {
         setAvatarPreview('');
       }
     }
-    
-    // Reset avatar file
+
+
     setAvatarFile(null);
   };
 
@@ -149,7 +90,7 @@ export default function UserProfile() {
 
   const handleAvatarClick = () => {
     if (isCurrentUser && isEditing) {
-      // Create a hidden file input and trigger it
+
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
@@ -158,8 +99,8 @@ export default function UserProfile() {
         if (target.files && target.files[0]) {
           const file = target.files[0];
           setAvatarFile(file);
-          
-          // Create a preview
+
+
           const reader = new FileReader();
           reader.onload = (e) => {
             if (e.target?.result) {
@@ -173,98 +114,58 @@ export default function UserProfile() {
     }
   };
 
-  const handleAvatarUpload = async () => {
-    if (!avatarFile) return;
-    
-    setIsUploadingAvatar(true);
-    try {
-      // Upload avatar to Supabase and get URL
-      const avatarUrl = await uploadToSupabase(avatarFile);
-      
-      if (avatarUrl) {
-        // Update form data and preview
-        setFormData(prev => ({ ...prev, avatar_url: avatarUrl }));
-        setAvatarPreview(avatarUrl);
-        
-        // Update profile data with new avatar URL
-        const updateData = {
-          avatar_url: avatarUrl
-        };
-      
-        const response = await fetch('/api/profiles', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updateData),
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          setProfileData({
-            ...profileData,
-            ...updateData
-          });
-          
-          toast.success('Profile picture updated successfully');
-        } else {
-          toast.error(data.message || 'Failed to update profile picture');
-        }
-      } else {
-        toast.error('Failed to upload image');
-      }
-    } catch (error) {
-      console.error("Error uploading avatar:", error);
-      toast.error('Something went wrong while uploading your profile picture');
-    } finally {
-      setIsUploadingAvatar(false);
-      setAvatarFile(null);
-    }
-  };
-
-  useEffect(() => {
-    // Automatically upload avatar when file is selected
-    if (avatarFile) {
-      handleAvatarUpload();
-    }
-  }, [avatarFile]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      // Prepare data for the API
+      let finalAvatarUrl = formData.avatar_url;
+
+
+      if (avatarFile) {
+        setIsUploadingAvatar(true);
+        try {
+          const uploadedUrl = await uploadToSupabase(avatarFile);
+          if (uploadedUrl) {
+            finalAvatarUrl = uploadedUrl;
+          } else {
+            toast.error('Failed to upload profile image');
+            setIsSubmitting(false);
+            setIsUploadingAvatar(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Error uploading avatar:', error);
+          toast.error('Failed to upload profile image');
+          setIsSubmitting(false);
+          setIsUploadingAvatar(false);
+          return;
+        } finally {
+          setIsUploadingAvatar(false);
+        }
+      }
+
+
       const updateData = {
         first_name: formData.first_name,
         last_name: formData.last_name,
-        avatar_url: formData.avatar_url
+        avatar_url: finalAvatarUrl,
       };
-      
-      const response = await fetch('/api/profiles', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
+
+      const response = await updateUserProfile(updateData);
+
+      if (response.success) {
         setProfileData({
           ...profileData,
-          ...updateData
+          ...updateData,
         });
-        
         toast.success('Profile updated successfully');
         setIsEditing(false);
       } else {
-        toast.error(data.message || 'Failed to update profile');
+        toast.error(response.message || 'Failed to update profile');
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error('Error updating profile:', error);
       toast.error('Something went wrong while updating your profile');
     } finally {
       setIsSubmitting(false);
@@ -292,11 +193,11 @@ export default function UserProfile() {
       <div className="bg-gray-800 rounded-xl border border-gray-700 mb-8">
         <div className="p-6">
           <div className="flex flex-col md:flex-row gap-8">
-            
+
             <div className="md:w-1/4">
               <div className="w-full flex flex-col items-center">
-                {/* Avatar with overlay for editing */}
-                <div 
+
+                <div
                   className={`w-48 h-48 rounded-full overflow-hidden bg-gray-700 mb-4 relative ${isCurrentUser && isEditing ? 'cursor-pointer group' : ''}`}
                   onClick={isCurrentUser && isEditing ? handleAvatarClick : undefined}
                 >
@@ -335,20 +236,18 @@ export default function UserProfile() {
                     Click on the avatar to change your profile picture
                   </p>
                 )}
-                
-                <h1 className="text-2xl font-bold text-white text-center mb-2">
-                  {profileData.first_name} {profileData.last_name}
-                </h1>
-                
+
                 <p className="text-gray-400 text-sm mb-4 text-center">
                   @{profileData.username || profileData.first_name?.toLowerCase()}
                 </p>
-                
+
                 <div className="text-gray-400 text-sm flex items-center gap-1 mb-4">
                   <FaRegCalendarAlt className="h-4 w-4" />
-                  <span>Joined {formatRelativeDate(profileData.created_at)}</span>
+                  <span title={profileData.created_at}>
+                    Joined {formatRelativeDate(profileData.created_at)}
+                  </span>
                 </div>
-                
+
                 {isCurrentUser && !isEditing && (
                   <button
                     onClick={handleEditProfile}
@@ -360,7 +259,7 @@ export default function UserProfile() {
                 )}
               </div>
             </div>
-            
+
             <div className="md:w-3/4">
               {isEditing ? (
                 <div>
@@ -379,11 +278,11 @@ export default function UserProfile() {
                         onChange={handleChange}
                         className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         required
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploadingAvatar}
                       />
                     </div>
-                    
-                    {/* Last Name */}
+
+
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-400 mb-2" htmlFor="last_name">
                         Last Name
@@ -395,10 +294,10 @@ export default function UserProfile() {
                         value={formData.last_name}
                         onChange={handleChange}
                         className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploadingAvatar}
                       />
                     </div>
-                    
+
                     {/* Email - Read-only */}
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-400 mb-2" htmlFor="email">
@@ -413,23 +312,25 @@ export default function UserProfile() {
                         disabled
                       />
                     </div>
-                    
+
                     {/* Form Actions */}
                     <div className="flex justify-end space-x-3 mt-6">
                       <button
                         type="button"
                         onClick={handleCancelEdit}
                         className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploadingAvatar}
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:bg-teal-800 disabled:cursor-not-allowed"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploadingAvatar}
                       >
-                        {isSubmitting ? "Saving..." : "Save Changes"}
+                        {isSubmitting || isUploadingAvatar ?
+                          (isUploadingAvatar ? "Uploading..." : "Saving...") :
+                          "Save Changes"}
                       </button>
                     </div>
                   </form>
@@ -437,58 +338,29 @@ export default function UserProfile() {
               ) : (
                 <div>
                   <h2 className="text-xl font-bold text-white mb-6">Profile Information</h2>
-                  
-                  <div className="flex gap-8 mb-6 border-b border-gray-700 pb-6">
-                    <div className="flex flex-col">
-                      <span className="text-xl font-bold text-white">{userThreads.length}</span>
-                      <span className="text-gray-400 text-sm">Threads</span>
-                    </div>
+
+                  <div className="mb-6">
+                    <h1 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                      {profileData.first_name} {profileData.last_name}
+
+                      <UserBadges
+                        userId={profileData.id}
+                        displayMode="inline"
+                        maxDisplay={2}
+                        size="sm"
+                        className="ml-2"
+                      />
+
+                    </h1>
+                    <h3 className="text-lg font-medium text-white mb-2">Email</h3>
+                    <p className="text-gray-300">{profileData.email}</p>
                   </div>
-                  
-                  {isCurrentUser && (
-                    <div className="mb-6">
-                      <h3 className="text-lg font-medium text-white mb-2">Email</h3>
-                      <p className="text-gray-300">{profileData.email}</p>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
-      
-      {!isEditing && (
-        <div>
-          <h2 className="text-xl font-bold text-white mb-4">Threads</h2>
-          <div className="space-y-4">
-            {isLoading ? (
-              <>
-                {[1, 2, 3].map((_, index) => (
-                  <div key={index} className="bg-gray-800 rounded-xl p-6 animate-pulse">
-                    <div className="h-6 bg-gray-700 rounded w-3/4 mb-4"></div>
-                    <div className="h-4 bg-gray-700 rounded w-1/2 mb-2"></div>
-                    <div className="h-4 bg-gray-700 rounded w-1/3"></div>
-                  </div>
-                ))}
-              </>
-            ) : userThreads.length === 0 ? (
-              <div className="bg-gray-800 rounded-xl p-6 text-center border border-gray-700">
-                <p className="text-gray-400">No threads found.</p>
-              </div>
-            ) : (
-              userThreads.map((thread) => (
-                <ProfileThreadItem 
-                  key={thread.id} 
-                  thread={thread} 
-                  isCurrentUser={isCurrentUser} 
-                  onThreadUpdated={refreshThreads}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

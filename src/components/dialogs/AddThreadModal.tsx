@@ -13,7 +13,7 @@ import {
 } from 'react-icons/fa';
 import { getAllCategories } from '@/utils/categories';
 import { Category, Thread } from '@/types';
-import { uploadToSupabase } from '@/utils/supabsebucket';
+import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import { addNewThread, updateThread } from '@/utils/threads';
 import { toast } from 'react-toastify';
 

@@ -34,7 +34,7 @@ const Navbar: React.FC = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchValue(e.target.value);
   };
-  
+
   const goToUserProfile = () => {
     if (userData?.id) {
       router.push(`/users/${userData.id}`);
@@ -69,7 +69,7 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="bg-gray-900 fixed top-0 left-0 w-full h-[70px] px-4 md:px-6 lg:px-8 flex items-center justify-between z-10">
-    
+
       <div className="flex-shrink-0 flex items-center">
         <Link href="/" className="flex items-center space-x-2">
           <Image
@@ -82,7 +82,7 @@ const Navbar: React.FC = () => {
         </Link>
       </div>
 
-      
+
       <div className="flex-1 max-w-2xl mx-4 px-2 md:mx-8">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -116,15 +116,15 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      
+
       <div className="flex items-center md:gap-4 gap-2">
-       
+
         <button className="p-1 rounded-full text-gray-400 hover:text-white focus:outline-none relative">
           <FiBell className="md:w-6 md:h-6 w-5 h-5" />
           <span className="absolute top-0 right-0 block md:h-2 md:w-2 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-gray-900"></span>
         </button>
 
-        
+
         <div className="relative ml-2" ref={userMenuRef}>
           {loading ? (
             <div className='py-2 px-5'>
@@ -155,17 +155,17 @@ const Navbar: React.FC = () => {
               )
           )}
 
-          
+
           {isUserMenuOpen && (
             <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 z-20 animate-scaleIn">
               <div className="py-1" role="menu">
-                
+
                 <div className="px-4 py-3 border-b border-gray-700">
                   <p className="text-sm font-medium text-white capitalize">{userData.first_name}{userData.last_name ? ` ${userData.last_name}` : ''}</p>
                   <p className="text-xs text-gray-400 truncate">{userData.email}</p>
                 </div>
 
-                
+
                 <button
                   onClick={goToUserProfile}
                   className="flex w-full items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"

@@ -156,7 +156,7 @@ export default function ThreadDetailPage() {
           <div className="border-b border-gray-700 p-6">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 group">
-                <div className="w-12 h-12 rounded-full  ring-2 ring-gray-700 group-hover:ring-teal-500 transition-all">
+                <div className="w-12 h-12 rounded-full  ring-2 ring-gray-700 group-hover:ring-teal-500 transition-all overflow-hidden">
                   <Image
                     src={threadData.profiles.avatar_url}
                     alt={threadData.author_name}
@@ -178,7 +178,7 @@ export default function ThreadDetailPage() {
                     {threadData.category_name}
                   </button>
 
-                  
+
                 </div>
 
                 <div className="flex items-center text-sm text-gray-400">
@@ -186,6 +186,9 @@ export default function ThreadDetailPage() {
                     {threadData.author_name}
                   </div>
 
+                  <span className='text-green-400 bg-green-400/10 px-2 text-center text-xs font-normal py-1 rounded-full'>
+                    1st Post
+                  </span>
                   <span className="mx-2 text-gray-600">•</span>
                   <span className="flex items-center">
                     <FaRegClock className="h-3 w-3 mr-1 text-gray-500" />

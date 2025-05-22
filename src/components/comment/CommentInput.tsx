@@ -7,7 +7,7 @@ import { AiOutlineLoading } from 'react-icons/ai';
 import ImageUpload from '../addons/ImageUpload';
 import { addComment } from '../../utils/threads';
 import { useAuth } from '@/context/AuthProvider';
-import { uploadToSupabase } from '@/utils/supabsebucket';
+import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import { toast } from 'react-toastify';
 
 export default function CommentInput({ threadId, fetchComments, parentId = null, replyToUsername = null }: {

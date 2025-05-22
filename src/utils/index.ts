@@ -1,5 +1,8 @@
 export function formatRelativeDate(dateString: string): string {
+  if (!dateString) return 'date unavailable';
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'date unavailable';
+
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -30,7 +33,6 @@ export function formatRelativeDate(dateString: string): string {
   const diffInYears = Math.floor(diffInMonths / 12);
   return `${diffInYears} ${diffInYears === 1 ? 'year' : 'years'} ago`;
 }
-
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
