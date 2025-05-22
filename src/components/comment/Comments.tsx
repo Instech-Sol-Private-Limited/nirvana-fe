@@ -5,7 +5,6 @@ import { MessageCircle } from 'lucide-react';
 import CommentItem from './CommentItem';
 import ReplyList from './ReplyList';
 import { getThreadComments, updateComment as updateCommentApi, deleteComment as deleteCommentApi } from '@/utils/threads';
-import CommentForm from './CommentForm';
 
 interface CommentType {
   id: string;
@@ -19,7 +18,10 @@ interface CommentType {
   user_id: string;
   created_at: string;
   updated_at: string;
-  isEdited?: boolean;
+  is_edited?: boolean;
+  profiles: {
+    avatar_url: string;
+  };
 }
 
 interface CommentsProps {
@@ -130,12 +132,12 @@ export default function Comments({ threadId }: CommentsProps) {
               author: {
                 id: comment.user_id,
                 username: comment.user_name,
-                avatar: comment.profiles?.avatar_url || null,
+                avatar: comment.profiles.avatar_url || null,
               },
               createdAt: comment.created_at,
               likeCount: comment.total_likes,
               dislikeCount: comment.total_dislikes,
-              isEdited: Boolean(comment.isEdited),
+              isEdited: Boolean(comment.is_edited),
               images: comment.imgs
             }}
             onReply={handleReplyToComment}

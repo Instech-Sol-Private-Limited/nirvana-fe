@@ -12,14 +12,15 @@ import DeleteCommentModal from './DeleteCommentModal';
 import { useAuth } from '@/context/AuthProvider';
 import { updateCommentReaction, addReply } from '@/utils/threads';
 
-interface Author {
+// types.ts
+
+export interface Author {
   id: string;
   username: string;
   avatar: string | null;
   role?: string;
 }
-
-interface Comment {
+export interface Comment {
   id: string;
   content: string;
   author: Author;
@@ -33,7 +34,6 @@ interface Comment {
   parentId?: string;
   images?: string[];
 }
-
 interface CommentItemProps {
   comment: Comment;
   isReply?: boolean;

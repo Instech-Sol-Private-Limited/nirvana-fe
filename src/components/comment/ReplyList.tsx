@@ -1,5 +1,3 @@
-// ReplyList.tsx - Updated implementation
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +8,7 @@ import { getCommentReplies, updateReply, deleteReply } from '@/utils/threads';
 interface Author {
   id: string;
   username: string;
-  avatar?: string | null;
+  avatar: string | null;
   role?: string;
 }
 
@@ -44,6 +42,9 @@ interface ReplyType {
   user_reaction: string | null;
   is_liked?: boolean;
   is_disliked?: boolean;
+  profiles?: {
+    avatar_url: string;
+  };
 }
 
 interface ReplyListProps {
@@ -60,7 +61,7 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
   const [error, setError] = useState<string | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  
+
   const refreshReplies = () => {
     setRefreshCounter(prev => prev + 1);
   };
@@ -112,9 +113,8 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
     const fetchReplies = async () => {
       try {
         setLoading(true);
-        console.log(parentId)
         const response = await getCommentReplies(parentId);
-        console.log(response)
+
         if (response.success && response.data && response.data.replies) {
           const formattedReplies = response.data.replies.map((reply: ReplyType) => ({
             id: reply.id,
@@ -122,7 +122,7 @@ const ReplyList = ({ parentId, onReply, onUpdate, onDelete }: ReplyListProps) =>
             author: {
               id: reply.user_id,
               username: reply.user_name,
-              avatar: null,
+              avatar: reply.profiles?.avatar_url || null,
             },
             createdAt: reply.created_at,
             likeCount: reply.total_likes,
