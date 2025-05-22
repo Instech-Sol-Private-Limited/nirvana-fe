@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthProvider';
 import { updateCommentReaction, addReply } from '@/utils/threads';
 import { toast } from 'react-toastify';
 import { uploadToSupabase } from '@/utils/supabsethreadbucket';
+import UserNameWithBadges from '../common/UsernameWithBadge';
 
 export interface Author {
   id: string;
