@@ -42,7 +42,8 @@ export default function UserNameWithBadges({
     loadBadges();
   }, [userId]);
   
-  const visibleBadges = badges.slice(0, maxBadges);
+  const visibleBadges = badges;
+
   
   return (
     <span className={`flex items-center gap-2 ${className}`}>
