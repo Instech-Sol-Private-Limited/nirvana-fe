@@ -3,25 +3,129 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Thread } from '../../types';
 import { formatRelativeDate } from '@/utils';
-import { FaRegComment, FaRegThumbsUp, FaRegThumbsDown } from 'react-icons/fa';
+import { FaRegComment, FaRegThumbsUp, FaRegThumbsDown, FaThumbsUp, FaThumbsDown, FaRegHeart, FaHeart } from 'react-icons/fa';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
-import { BsThreeDots } from 'react-icons/bs';
 import ThreadActions from '../threads/ThreadActions';
 import AddThreadModal from '../dialogs/AddThreadModal';
 import DeleteThreadModal from '../dialogs/DeleteThreadModal';
 import { useAuth } from '@/context/AuthProvider';
 import UserNameWithBadges from '@/components/common/UsernameWithBadge';
+import { applyThreadReaction } from '@/utils/threads';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
+import { TbBulb, TbBulbFilled } from 'react-icons/tb';
+import { SiHuggingface } from 'react-icons/si';
 interface ThreadListProps {
   threads: Thread[];
+  setThreads?: (value: any) => void;
   isLoading?: boolean;
   onNewThread: () => void;
 }
 
-const ThreadList: React.FC<ThreadListProps> = ({ threads, isLoading = false, onNewThread }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [selectedThread, setSelectedThread] = useState({})
+const ThreadList: React.FC<ThreadListProps> = ({ threads, setThreads, isLoading = false, onNewThread }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedThread, setSelectedThread] = useState({});
+  const router = useRouter();
   const { userId } = useAuth();
+
+  // const handleApplyReact = async (
+  //   threadId: string,
+  //   thread: Thread,
+  //   type: 'like' | 'dislike' | 'heart' | 'hug' | 'insightful' | null
+  // ) => {
+  //   if (!setThreads) return;
+  //   if (!userId) {
+  //     toast.error('accpount is not logged in!');
+  //     router.push('/login');
+  //   }
+  //   setThreads((prev: Thread[]) =>
+  //     prev.map((t) => {
+  //       if (t.id !== thread.id) return t;
+
+  //       let newReaction: 'like' | 'dislike' | 'heart' | 'hug' | 'insightful' | null = t.user_reaction === type ? null : type;
+  //       let totalLikes = t.total_likes;
+  //       let totalDislikes = t.total_dislikes;
+
+  //       // Remove previous reaction
+  //       if (t.user_reaction === 'like') totalLikes--;
+  //       if (t.user_reaction === 'dislike') totalDislikes--;
+
+  //       // Apply new reaction if not null
+  //       if (newReaction === 'like') totalLikes++;
+  //       if (newReaction === 'dislike') totalDislikes++;
+
+  //       return {
+  //         ...t,
+  //         user_reaction: newReaction,
+  //         total_likes: totalLikes,
+  //         total_dislikes: totalDislikes,
+  //       };
+  //     })
+  //   );
+
+  //   await applyThreadReaction(threadId, type);
+  // };
+
+  const handleApplyReact = async (
+    threadId: string,
+    thread: Thread,
+    type: 'like' | 'dislike' | 'heart' | 'hug' | 'insightful' | null
+  ) => {
+    if (!setThreads) return;
+    if (!userId) {
+      toast.error('Account is not logged in!');
+      router.push('/login');
+      return;
+    }
+
+    setThreads((prev: Thread[]) =>
+      prev.map((t) => {
+        if (t.id !== thread.id) return t;
+
+        const newReaction = t.user_reaction === type ? null : type;
+
+        const reactionFields = {
+          like: 'total_likes',
+          dislike: 'total_dislikes',
+          heart: 'total_hearts',
+          hug: 'total_hugs',
+          insightful: 'total_insightfuls',
+        } as const;
+
+        type ReactionType = keyof typeof reactionFields;
+        type FieldMap = Record<typeof reactionFields[ReactionType], number>;
+
+        const updatedCounts: FieldMap = {
+          total_likes: t.total_likes,
+          total_dislikes: t.total_dislikes,
+          total_hearts: t.total_hearts,
+          total_hugs: t.total_hugs,
+          total_insightfuls: t.total_insightfuls,
+        };
+
+        // Decrease previous reaction
+        if (t.user_reaction) {
+          const prevField = reactionFields[t.user_reaction as ReactionType];
+          updatedCounts[prevField] = Math.max(0, updatedCounts[prevField] - 1);
+        }
+
+        // Increase new reaction
+        if (newReaction) {
+          const newField = reactionFields[newReaction as ReactionType];
+          updatedCounts[newField]++;
+        }
+
+        return {
+          ...t,
+          user_reaction: newReaction,
+          ...updatedCounts,
+        };
+      })
+    );
+
+    await applyThreadReaction(threadId, type);
+  };
 
   if (isLoading) {
     return (
@@ -93,7 +197,7 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, isLoading = false, onN
                       </h3>
 
                       <div className="flex flex-wrap items-center mt-1 text-xs text-gray-400 gap-x-2 gap-y-1">
-                        <UserNameWithBadges 
+                        <UserNameWithBadges
                           userId={thread.author_id}
                           username={thread.author_name}
                           className="text-teal-500 font-medium"
@@ -112,17 +216,75 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, isLoading = false, onN
                     </Link>
 
                     <div className="flex items-center gap-3 text-gray-400">
-                      <div className="flex items-center gap-1 text-sm">
-                        <FaRegThumbsUp className="text-gray-400 cursor-pointer" />
+                      {/* Like */}
+                      <div
+                        className="flex items-center gap-1 text-sm cursor-pointer"
+                        onClick={() => handleApplyReact(thread.id, thread, 'like')}
+                      >
+                        {thread.user_reaction === 'like' ? (
+                          <FaThumbsUp className="text-amber-200" />
+                        ) : (
+                          <FaRegThumbsUp className="text-gray-400" />
+                        )}
                         <span>{thread.total_likes || 0}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-sm">
-                        <FaRegThumbsDown className="text-gray-400 cursor-pointer" />
+
+                      {/* Dislike */}
+                      <div
+                        className="flex items-center gap-1 text-sm cursor-pointer"
+                        onClick={() => handleApplyReact(thread.id, thread, 'dislike')}
+                      >
+                        {thread.user_reaction === 'dislike' ? (
+                          <FaThumbsDown className="text-amber-700" />
+                        ) : (
+                          <FaRegThumbsDown className="text-gray-400" />
+                        )}
                         <span>{thread.total_dislikes || 0}</span>
                       </div>
+
+                      {/* Insightful */}
+                      <div
+                        className="flex items-center gap-1 text-sm cursor-pointer"
+                        onClick={() => handleApplyReact(thread.id, thread, 'insightful')}
+                      >
+                        {thread.user_reaction === 'insightful' ? (
+                          <TbBulbFilled className="text-yellow-500 text-lg" />
+                        ) : (
+                          <TbBulb className="text-gray-400 text-lg" />
+                        )}
+                        <span>{thread.total_insightfuls || 0}</span>
+                      </div>
+
+                      {/* Heart */}
+                      <div
+                        className="flex items-center gap-1 text-sm cursor-pointer"
+                        onClick={() => handleApplyReact(thread.id, thread, 'heart')}
+                      >
+                        {thread.user_reaction === 'heart' ? (
+                          <FaHeart className="text-pink-500" />
+                        ) : (
+                          <FaRegHeart className="text-gray-400" />
+                        )}
+                        <span>{thread.total_hearts || 0}</span>
+                      </div>
+
+                      {/* Hug */}
+                      <div
+                        className="flex items-center gap-1 text-sm cursor-pointer"
+                        onClick={() => handleApplyReact(thread.id, thread, 'hug')}
+                      >
+                        {thread.user_reaction === 'hug' ? (
+                          <SiHuggingface className="text-cyan-500" />
+                        ) : (
+                          <SiHuggingface className="text-gray-400" />
+                        )}
+                        <span>{thread.total_hugs || 0}</span>
+                      </div>
+
+                      {/* comments */}
                       <div className="flex items-center gap-1 text-sm">
                         <FaRegComment className="text-gray-400 cursor-pointer" />
-                        <span>{thread.total_dislikes || 0}</span>
+                        <span>{thread.total_comments || 0}</span>
                       </div>
 
                       {thread.author_id === userId && (

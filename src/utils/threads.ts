@@ -6,11 +6,36 @@ interface ApiResponse<T> {
     message?: string;
 }
 
+interface AddCommentParams {
+    thread_id: string;
+    content: string;
+    imgs?: string[];
+}
+
+interface UpdateCommentParams {
+    comment_id: string;
+    content: string;
+    imgs?: (string | undefined)[]
+}
+
+interface AddReplyParams {
+    comment_id: string;
+    content: string;
+    imgs?: string[];
+}
+
+interface UpdateReplyParams {
+    comment_id: string;
+    content: string;
+}
+
+
 // ===================== Threads Utils =============================
 
 const getAllThreads = async (limit: number, offset: number): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.get(`/threads/get-all-threads?limit=${limit}&offset=${offset}`);
+        console.log(response.data);
         return {
             success: true,
             data: response.data
@@ -88,10 +113,9 @@ const deleteThread = async (thread_id: string) => {
     }
 };
 
-// Thread reactions
-const updateThreadReaction = async (thread_id: string, reactionType: 'like' | 'dislike' | 'none') => {
+const applyThreadReaction = async (thread_id: string, reactionType: 'like' | 'dislike' | 'heart' | 'hug' | 'insightful' | null) => {
     try {
-        const response = await apiClient.patch(`/threads/apply-react/${thread_id}`, { reaction_type: reactionType });
+        const response = await apiClient.patch(`/threads/apply-react/${thread_id}`, { type: reactionType });
         return {
             success: true,
             data: response.data
@@ -137,9 +161,11 @@ const getAllReactionsByUser = async () => {
     }
 };
 
+
+
+
 // ===================== Threads Comments Utils =============================
 
-// Get comments for a thread
 const getThreadComments = async (thread_id: string): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.get(`/threads/get-comments/${thread_id}`);
@@ -156,13 +182,6 @@ const getThreadComments = async (thread_id: string): Promise<ApiResponse<any>> =
     }
 };
 
-
-interface AddCommentParams {
-    thread_id: string;
-    content: string;
-    imgs?: string[];
-}
-
 const addComment = async (params: AddCommentParams): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.post(`/threads/add-comment`, params);
@@ -178,12 +197,6 @@ const addComment = async (params: AddCommentParams): Promise<ApiResponse<any>> =
         };
     }
 };
-
-interface UpdateCommentParams {
-    comment_id: string;
-    content: string;
-    imgs?: (string | undefined)[]
-}
 
 const updateComment = async (params: UpdateCommentParams): Promise<ApiResponse<any>> => {
     try {
@@ -204,7 +217,6 @@ const updateComment = async (params: UpdateCommentParams): Promise<ApiResponse<a
     }
 };
 
-
 const deleteComment = async (comment_id: string): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.delete(`/threads/delete-comment/${comment_id}`);
@@ -221,12 +233,9 @@ const deleteComment = async (comment_id: string): Promise<ApiResponse<any>> => {
     }
 };
 
-
-const updateCommentReaction = async (comment_id: string, reactionType: 'like' | 'dislike' | 'none'): Promise<ApiResponse<any>> => {
+const applyCommentReaction = async (comment_id: string, reactionType: 'like' | 'dislike' | null) => {
     try {
-        const response = await apiClient.patch(`/threads/apply-comment-react/${comment_id}`, {
-            reaction_type: reactionType
-        });
+        const response = await apiClient.patch(`/threads/apply-comment-react/${comment_id}`, { type: reactionType });
         return {
             success: true,
             data: response.data
@@ -239,7 +248,6 @@ const updateCommentReaction = async (comment_id: string, reactionType: 'like' | 
         };
     }
 };
-
 
 const getCommentReactionsByThread = async (thread_id: string): Promise<ApiResponse<any>> => {
     try {
@@ -257,19 +265,20 @@ const getCommentReactionsByThread = async (thread_id: string): Promise<ApiRespon
     }
 };
 
-// ===================== Comment's Replies Utils =============================
 
+
+
+// ===================== Comment's Replies Utils =============================
 
 const getCommentReplies = async (comment_id: string): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.get(`/threads/get-replies/${comment_id}`);
-         console.log('Fetched replies:', response.data);
         return {
             success: true,
             data: response.data
         };
     } catch (error) {
-        console.error('Error fetching replies:', error); 
+        console.error('Error fetching replies:', error);
         return {
             success: false,
             // @ts-ignore
@@ -278,12 +287,6 @@ const getCommentReplies = async (comment_id: string): Promise<ApiResponse<any>> 
     }
 };
 
-// Add a reply to a comment
-interface AddReplyParams {
-    comment_id: string;
-    content: string;
-    imgs?: string[];
-}
 
 const addReply = async (params: AddReplyParams): Promise<ApiResponse<any>> => {
     try {
@@ -298,17 +301,11 @@ const addReply = async (params: AddReplyParams): Promise<ApiResponse<any>> => {
     } catch (error) {
         return {
             success: false,
-              // @ts-ignore
+            // @ts-ignore
             message: error.message || 'An unexpected error occurred'
         };
     }
 };
-
-// Update a reply
-interface UpdateReplyParams {
-    comment_id: string;
-    content: string;
-}
 
 const updateReply = async (params: UpdateReplyParams): Promise<ApiResponse<any>> => {
     try {
@@ -316,7 +313,6 @@ const updateReply = async (params: UpdateReplyParams): Promise<ApiResponse<any>>
             content: params.content,
         });
 
-        console.log(response)
         return {
             success: true,
             data: response.data
@@ -330,7 +326,6 @@ const updateReply = async (params: UpdateReplyParams): Promise<ApiResponse<any>>
     }
 };
 
-// Delete a reply
 const deleteReply = async (comment_id: string): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.delete(`/threads/delete-reply/${comment_id}`);
@@ -347,7 +342,6 @@ const deleteReply = async (comment_id: string): Promise<ApiResponse<any>> => {
     }
 };
 
-// Update reply reaction (like/dislike)
 const updateReplyReaction = async (comment_id: string, reactionType: 'like' | 'dislike' | 'none'): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.patch(`/threads/apply-reply-react/${comment_id}`, {
@@ -366,7 +360,6 @@ const updateReplyReaction = async (comment_id: string, reactionType: 'like' | 'd
     }
 };
 
-// Get user's reactions for all replies to a comment
 const getReplyReactions = async (comment_id: string): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.get(`/threads/get-reply-reaction/${comment_id}`);
@@ -408,19 +401,19 @@ export {
     addNewThread,
     deleteThread,
     updateThread,
-    updateThreadReaction,
+    applyThreadReaction,
     getThreadReaction,
     getAllReactionsByUser,
-    
+
     // Comment operations
     getThreadComments,
     addComment,
     updateComment,
     deleteComment,
-    updateCommentReaction,
+    applyCommentReaction,
     getCommentReactionsByThread,
-    
-    
+
+
     getCommentReplies,
     addReply,
     updateReply,

@@ -48,7 +48,6 @@ export default function CommentInput({ threadId, fetchComments, parentId = null,
       const imageUrls = await Promise.all(
         uploadedFiles.map(async (file) => {
           const url = await uploadToSupabase(file);
-          console.log(url)
           return url;
         })
       );

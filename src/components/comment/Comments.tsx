@@ -4,21 +4,79 @@ import { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import CommentItem from './CommentItem';
 import ReplyList from './ReplyList';
-import { getThreadComments, updateComment as updateCommentApi, deleteComment as deleteCommentApi, getCommentReplies } from '@/utils/threads';
+import { getThreadComments, updateComment as updateCommentApi, deleteComment as deleteCommentApi, getCommentReplies, applyCommentReaction } from '@/utils/threads';
 import CommentInput from './CommentInput';
 import { Comment, Reply } from '@/types';
+import { useAuth } from '@/context/AuthProvider';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
 
 interface CommentsProps {
   threadId: string;
   threadsStats?: any;
-  setThreadsStats?: any;
+  fetchThreadDetails?: () => void;
 }
 
-export default function Comments({ threadId, threadsStats, setThreadsStats }: CommentsProps) {
+export default function Comments({ threadId, threadsStats, fetchThreadDetails }: CommentsProps) {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [replies, setReplies] = useState<Reply[]>([]);
+  const [replies, setReplies] = useState<Record<string, Reply[]>>({});
   const [loading, setLoading] = useState(true);
   const [replyLoading, setReplyLoading] = useState(true);
+  const { userId } = useAuth();
+  const router = useRouter();
+
+  const handleApplyReact = async (
+    parentId: string,
+    comment: Comment,
+    type: 'like' | 'dislike'
+  ) => {
+    if (!userId) {
+      toast.error('Account is not logged in!');
+      router.push('/login');
+      return;
+    }
+
+    setComments((prev: Comment[]) =>
+      prev.map((t) => {
+        if (t.id !== comment.id) return t;
+
+        const newReaction = t.user_reaction === type ? null : type;
+
+        const reactionFields = {
+          like: 'total_likes',
+          dislike: 'total_dislikes',
+        } as const;
+
+        type ReactionType = keyof typeof reactionFields;
+        type FieldMap = Record<typeof reactionFields[ReactionType], number>;
+
+        const updatedCounts: FieldMap = {
+          total_likes: t.total_likes,
+          total_dislikes: t.total_dislikes,
+        };
+
+        // Decrease previous reaction
+        if (t.user_reaction) {
+          const prevField = reactionFields[t.user_reaction as ReactionType];
+          updatedCounts[prevField] = Math.max(0, updatedCounts[prevField] - 1);
+        }
+
+        // Increase new reaction
+        if (newReaction) {
+          const newField = reactionFields[newReaction as ReactionType];
+          updatedCounts[newField]++;
+        }
+
+        return {
+          ...t,
+          user_reaction: newReaction,
+          ...updatedCounts,
+        };
+      })
+    );
+
+    await applyCommentReaction(parentId, type);
+  };
 
   const handleUpdateComment = async (
     data: {
@@ -46,11 +104,7 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
       const response = await deleteCommentApi(commentId);
 
       if (response.success) {
-        const newComments = comments.filter(comment =>
-          comment.id !== commentId
-        );
-        setComments(newComments);
-        console.log(`Deleted comment ${commentId}`);
+        fetchComments();
       } else {
         console.error("Failed to delete comment:", response.message);
       }
@@ -69,10 +123,6 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
         if (response.data.comments.has_subcomment) {
 
         }
-        setThreadsStats((prev: any) => ({
-          ...prev,
-          comments: response.data?.comments.length
-        }))
       }
     } catch (error) {
       console.error(error);
@@ -85,8 +135,10 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
     try {
       const response = await getCommentReplies(parentId);
       if (response.success) {
-        setReplies(response.data.replies || []);
-      } else {
+        setReplies(prev => ({
+          ...prev,
+          [parentId]: response.data.replies || []
+        }));
       }
     } catch (err) {
       console.error('Error fetching replies:', err);
@@ -129,18 +181,23 @@ export default function Comments({ threadId, threadsStats, setThreadsStats }: Co
               <CommentItem
                 comment={comment}
                 type="comment"
+                handleApplyReact={handleApplyReact}
                 parentId={comment.id}
                 fetchReplies={fetchReplies}
                 onUpdate={handleUpdateComment}
                 onDelete={handleDeleteComment}
               />
+
+              {/* {comment.has_subcomment && ( */}
               <ReplyList
                 parentId={comment.id}
                 fetchReplies={fetchReplies}
-                replies={replies}
+                replies={replies[comment.id] || []}
                 loading={replyLoading}
                 setLoading={setReplyLoading}
               />
+
+              {/* )} */}
             </div>
           ))}
         </div>

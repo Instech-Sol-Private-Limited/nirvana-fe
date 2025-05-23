@@ -81,7 +81,7 @@ const ReplyList = ({ parentId, fetchReplies, replies, loading, setLoading }: Rep
 
   return (
     <div className="mt-4">
-      {replies.reverse().slice(0, visibleReplies).map(reply => (
+      {replies.slice(0, visibleReplies).reverse().map(reply => (
         <CommentItem
           key={reply.id}
           type="reply"

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { formatRelativeDate } from '../../../utils';
 import ThreadCreatedNotification from '../../../components/forum/ThreadCreatedNotification';
-import { getThreadDetails } from '@/utils/threads';
+import { applyThreadReaction, getThreadDetails } from '@/utils/threads';
 import { Thread } from '@/types';
 import {
   FaRegSadTear,
@@ -17,79 +17,98 @@ import {
   FaThumbsDown,
   FaRegThumbsDown,
   FaRegComment,
+  FaHeart,
+  FaRegHeart,
 } from 'react-icons/fa';
 import Comments from '@/components/comment/Comments';
 import UserNameWithBadges
   from '@/components/common/UsernameWithBadge';
+import { useAuth } from '@/context/AuthProvider';
+import { toast } from 'react-toastify';
+import { TbBulb, TbBulbFilled } from 'react-icons/tb';
+import { SiHuggingface } from 'react-icons/si';
+
 export default function ThreadDetailPage() {
   const router = useRouter();
   const params = useParams();
   const [threadData, setThreadData] = useState<Thread | null>(null);
   const [threadId, setThreadId] = useState<string>('');
   const [showCreatedNotification, setShowCreatedNotification] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isDisliked, setIsDisliked] = useState(false);
   const [threadsStats, setThreadsStats] = useState({ likes: 0, dislikes: 0, comments: 0 })
+  const { userId } = useAuth();
 
-  const handleLikeToggle = () => {
-    if (isLiked) {
-      setThreadsStats(prev => ({
-        ...prev,
-        likes: prev.likes - 1,
-      }))
-    } else {
-      if (isDisliked) {
-
-        setThreadsStats(prev => ({
-          ...prev,
-          likes: prev.likes + 1,
-          dislikes: prev.dislikes - 1
-        }));
-        setIsDisliked(false);
-      }
+  const handleApplyReact = async (
+    threadId: string,
+    thread: Thread,
+    type: 'like' | 'dislike' | 'heart' | 'hug' | 'insightful' | null
+  ) => {
+    if (!userId) {
+      toast.error('Account is not logged in!');
+      router.push('/login');
+      return;
     }
-    setIsLiked(!isLiked);
-  };
 
-  const handleDislikeToggle = () => {
-    if (isDisliked) {
-      setThreadsStats(prev => ({
-        ...prev,
-        dislikes: prev.dislikes - 1,
-      }))
-    } else {
-      setThreadsStats(prev => ({
-        ...prev,
-        dislikes: prev.dislikes + 1,
-      }))
+    setThreadData((prev) => {
+      if (!prev || prev.id !== thread.id) return prev;
 
-      if (isLiked) {
+      const newReaction = prev.user_reaction === type ? null : type;
 
-        setThreadsStats(prev => ({
-          ...prev,
-          likes: prev.likes - 1,
-        }))
-        setIsLiked(false);
+      const reactionFields = {
+        like: 'total_likes',
+        dislike: 'total_dislikes',
+        heart: 'total_hearts',
+        hug: 'total_hugs',
+        insightful: 'total_insightfuls',
+      } as const;
+
+      type ReactionType = keyof typeof reactionFields;
+      type FieldMap = Record<typeof reactionFields[ReactionType], number>;
+
+      const updatedCounts: FieldMap = {
+        total_likes: prev.total_likes,
+        total_dislikes: prev.total_dislikes,
+        total_hearts: prev.total_hearts,
+        total_hugs: prev.total_hugs,
+        total_insightfuls: prev.total_insightfuls,
+      };
+
+      // Decrease previous reaction count
+      if (prev.user_reaction) {
+        const prevField = reactionFields[prev.user_reaction as ReactionType];
+        updatedCounts[prevField] = Math.max(0, updatedCounts[prevField] - 1);
       }
-    }
-    setIsDisliked(!isDisliked);
+
+      // Increase new reaction count
+      if (newReaction) {
+        const newField = reactionFields[newReaction as ReactionType];
+        updatedCounts[newField]++;
+      }
+
+      return {
+        ...prev,
+        user_reaction: newReaction,
+        ...updatedCounts,
+      };
+    });
+
+    await applyThreadReaction(threadId, type);
   };
 
   const handleCategoryClick = (slug: string) => {
     router.push(`/categories/${slug}`);
   };
 
-  useEffect(() => {
-    const fetchThreadDetails = async () => {
-      if (params && params.id) {
-        const response = await getThreadDetails(params.id as string);
-        if (response.success) {
-          console.log(response.data.thread)
-          setThreadData(response.data.thread)
-          setThreadId(params.id as string);
-        }
+  const fetchThreadDetails = async () => {
+    if (params && params.id) {
+      const response = await getThreadDetails(params.id as string);
+      if (response.success) {
+        setThreadData(response.data)
+        setThreadId(params.id as string);
       }
     }
+  }
+
+  useEffect(() => {
     fetchThreadDetails()
   }, [params]);
 
@@ -117,6 +136,7 @@ export default function ThreadDetailPage() {
         ...prev,
         likes: threadData.total_likes,
         dislikes: threadData.total_dislikes,
+        comments: threadData.total_comments,
       }))
     }
   }, [threadData]);
@@ -189,7 +209,7 @@ export default function ThreadDetailPage() {
                     className="text-teal-400 hover:text-teal-300 font-medium"
                   />
 
-                  
+
                   <span className="mx-2 text-gray-600">•</span>
                   <span className="flex items-center">
                     <FaRegClock className="h-3 w-3 mr-1 text-gray-500" />
@@ -234,34 +254,76 @@ export default function ThreadDetailPage() {
             </div>
 
             <div className="mt-6 flex items-center justify-between border-t border-gray-700 pt-4">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handleLikeToggle}
-                  className={`flex items-center gap-2 ${isLiked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
+              <div className="flex items-center gap-3 text-gray-400">
+                {/* Like */}
+                <div
+                  className="flex items-center gap-1 md:text-base text-sm cursor-pointer"
+                  onClick={() => handleApplyReact(threadData.id, threadData, 'like')}
                 >
-                  {isLiked ? (
-                    <FaThumbsUp className="h-5 w-5 fill-current" />
+                  {threadData.user_reaction === 'like' ? (
+                    <FaThumbsUp className="text-amber-200 md:text-lg text-base" />
                   ) : (
-                    <FaRegThumbsUp className="h-5 w-5" />
+                    <FaRegThumbsUp className="text-gray-400 md:text-lg text-base" />
                   )}
-                  <span>{threadsStats.likes}</span>
-                </button>
+                  <span>{threadData.total_likes || 0}</span>
+                </div>
 
-                <button
-                  onClick={handleDislikeToggle}
-                  className={`flex items-center gap-2 ${isDisliked ? 'text--400' : 'text-gray-400'} hover:text-gray-400 transition-colors`}
+                {/* Dislike */}
+                <div
+                  className="flex items-center gap-1 md:text-base text-sm cursor-pointer"
+                  onClick={() => handleApplyReact(threadData.id, threadData, 'dislike')}
                 >
-                  {isDisliked ? (
-                    <FaThumbsDown className="h-5 w-5 fill-current" />
+                  {threadData.user_reaction === 'dislike' ? (
+                    <FaThumbsDown className="text-amber-700 md:text-lg text-base" />
                   ) : (
-                    <FaRegThumbsDown className="h-5 w-5" />
+                    <FaRegThumbsDown className="text-gray-400 md:text-lg text-base" />
                   )}
-                  <span>{threadsStats.dislikes || 0}</span>
-                </button>
+                  <span>{threadData.total_dislikes || 0}</span>
+                </div>
 
-                <div className="flex items-center gap-2 text-gray-400">
-                  <FaRegComment className="h-5 w-5 fill-current" />
-                  <span>{threadsStats.comments}</span>
+                {/* Insightful */}
+                <div
+                  className="flex items-center gap-1 md:text-base text-sm cursor-pointer"
+                  onClick={() => handleApplyReact(threadData.id, threadData, 'insightful')}
+                >
+                  {threadData.user_reaction === 'insightful' ? (
+                    <TbBulbFilled className="text-yellow-500 md:text-xl text-lg" />
+                  ) : (
+                    <TbBulb className="text-gray-400 md:text-xl text-lg" />
+                  )}
+                  <span>{threadData.total_insightfuls || 0}</span>
+                </div>
+
+                {/* Heart */}
+                <div
+                  className="flex items-center gap-1 md:text-base text-sm cursor-pointer"
+                  onClick={() => handleApplyReact(threadData.id, threadData, 'heart')}
+                >
+                  {threadData.user_reaction === 'heart' ? (
+                    <FaHeart className="text-pink-500 md:text-lg text-base" />
+                  ) : (
+                    <FaRegHeart className="text-gray-400 md:text-lg text-base" />
+                  )}
+                  <span>{threadData.total_hearts || 0}</span>
+                </div>
+
+                {/* Hug */}
+                <div
+                  className="flex items-center gap-1 md:text-base text-sm cursor-pointer"
+                  onClick={() => handleApplyReact(threadData.id, threadData, 'hug')}
+                >
+                  {threadData.user_reaction === 'hug' ? (
+                    <SiHuggingface className="text-cyan-500 md:text-lg text-base" />
+                  ) : (
+                    <SiHuggingface className="text-gray-400 md:text-lg text-base" />
+                  )}
+                  <span>{threadData.total_hugs || 0}</span>
+                </div>
+
+                {/* comments */}
+                <div className="flex items-center gap-1 md:text-base text-sm">
+                  <FaRegComment className="text-gray-400 cursor-pointer md:text-lg text-base" />
+                  <span>{threadData.total_comments || 0}</span>
                 </div>
               </div>
             </div>
@@ -276,7 +338,7 @@ export default function ThreadDetailPage() {
       )}
 
       {/* Comments */}
-      <Comments threadId={threadId} threadsStats={threadsStats} setThreadsStats={setThreadsStats} />
+      <Comments threadId={threadId} threadsStats={threadsStats} fetchThreadDetails={fetchThreadDetails} />
     </div>
   );
 }

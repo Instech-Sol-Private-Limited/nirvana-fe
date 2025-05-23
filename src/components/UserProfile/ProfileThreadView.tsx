@@ -67,7 +67,6 @@ const ProfileThreadView: React.FC<ProfileThreadViewProps> = ({ threadId, onBack,
 
   const handleDeleteThread = async () => {
     try {
-      console.log('Deleting thread:', threadId);
       onBack();
     } catch (error) {
       console.error('Error deleting thread:', error);
