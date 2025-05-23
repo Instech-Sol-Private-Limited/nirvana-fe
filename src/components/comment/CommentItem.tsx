@@ -13,7 +13,7 @@ import { addReply } from '@/utils/threads';
 import { toast } from 'react-toastify';
 import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import UserNameWithBadges from '../common/UsernameWithBadge';
-import { Comment } from '@/types';
+import { Comment, Reply as Replys } from '@/types';
 
 export interface Author {
   id: string;
@@ -23,11 +23,11 @@ export interface Author {
 }
 
 interface CommentItemProps {
-  comment: Comment;
+  comment: Comment | any;
   type: "reply" | "comment";
   reply_to?: string;
   parentId: string;
-  handleApplyReact: (parentId: string, comment: Comment, type: 'like' | 'dislike') => Promise<void>;
+  handleApplyReact: (parentId: string, comment: Comment, type: 'like' | 'dislike') => Promise<void> | any;
   fetchReplies: (parentId: string) => void;
   onUpdate: (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => Promise<any>;
   onDelete?: (commentId: string) => void;

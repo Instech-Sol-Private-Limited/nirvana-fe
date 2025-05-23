@@ -87,6 +87,7 @@ const ReplyList = ({ parentId, fetchReplies, replies, loading, setLoading }: Rep
           type="reply"
           reply_to={reply.user_name}
           comment={reply}
+          handleApplyReact={() => { }}
           parentId={parentId}
           fetchReplies={fetchReplies}
           onUpdate={handleUpdateReply}
