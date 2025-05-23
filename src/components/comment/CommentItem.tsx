@@ -9,10 +9,11 @@ import ThreadActions from '@/components/threads/ThreadActions';
 import CommentEditForm from './CommentEditForm';
 import DeleteCommentModal from '../dialogs/DeleteCommentModal';
 import { useAuth } from '@/context/AuthProvider';
-import { updateCommentReaction, addReply } from '@/utils/threads';
+import { addReply } from '@/utils/threads';
 import { toast } from 'react-toastify';
 import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import UserNameWithBadges from '../common/UsernameWithBadge';
+import { Comment } from '@/types';
 
 export interface Author {
   id: string;
@@ -20,32 +21,13 @@ export interface Author {
   avatar: string | null;
   role?: string;
 }
-export interface Comment {
-  id: string;
-  thread_id?: string;
-  comment_id?: string;
-  content: string;
-  total_likes: number;
-  total_dislikes: number;
-  user_name: string;
-  user_id: string;
-  profiles: {
-    avatar_url: string;
-  };
-  created_at: string;
-  updated_at: string;
-  is_edited: boolean;
-  is_deleted?: boolean;
-  is_solution?: boolean;
-  imgs?: string[];
-  has_subcomment?: boolean;
-  user_reaction?: any;
-}
+
 interface CommentItemProps {
   comment: Comment;
   type: "reply" | "comment";
   reply_to?: string;
   parentId: string;
+  handleApplyReact: (parentId: string, comment: Comment, type: 'like' | 'dislike') => Promise<void>;
   fetchReplies: (parentId: string) => void;
   onUpdate: (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => Promise<any>;
   onDelete?: (commentId: string) => void;
@@ -55,59 +37,18 @@ const CommentItem = ({
   comment,
   type = "comment",
   parentId,
+  handleApplyReact,
   reply_to,
   fetchReplies,
   onUpdate,
   onDelete,
 }: CommentItemProps) => {
-  const [isLiked, setIsLiked] = useState(comment.user_reaction === 'like');
-  const [isDisliked, setIsDisliked] = useState(comment.user_reaction === 'dislike');
-  const [likeCount, setLikeCount] = useState(comment.total_likes);
-  const [dislikeCount, setDislikeCount] = useState(comment.total_dislikes || 0);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { userId } = useAuth();
   const isAuthor = userId === comment.user_id;
-
-  const handleLikeToggle = async () => {
-    try {
-      const reaction = isLiked ? 'none' : 'like';
-      const response = await updateCommentReaction(comment.id, reaction);
-
-      if (response.success) {
-        setIsLiked(!isLiked);
-        setLikeCount((prev) => prev + (isLiked ? -1 : 1));
-
-        if (isDisliked) {
-          setIsDisliked(false);
-          setDislikeCount((prev) => prev - 1);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating reaction:', error);
-    }
-  };
-
-  const handleDislikeToggle = async () => {
-    try {
-      const reaction = isDisliked ? 'none' : 'dislike';
-      const response = await updateCommentReaction(comment.id, reaction);
-
-      if (response.success) {
-        setIsDisliked(!isDisliked);
-        setDislikeCount((prev) => prev + (isDisliked ? -1 : 1));
-
-        if (isLiked) {
-          setIsLiked(false);
-          setLikeCount((prev) => prev - 1);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating reaction:', error);
-    }
-  };
 
   const handleReplyClick = () => {
     setShowReplyForm(!showReplyForm);
@@ -164,7 +105,6 @@ const CommentItem = ({
             return preview;
           } else {
             const file = images[index]
-            console.log(file)
             const url = await uploadToSupabase(file);
             return url;
           }
@@ -220,7 +160,7 @@ const CommentItem = ({
                 <div className="flex items-center gap-3">
                   <CommentAuthor author={{ avatar: comment.profiles?.avatar_url, username: comment.user_name }} />
                   <div className="flex-grow flex items-center gap-3">
-                    <UserNameWithBadges 
+                    <UserNameWithBadges
                       userId={comment.user_id}
                       username={comment.user_name}
                       className="text-white hover:text-teal-400 transition-colors"
@@ -260,22 +200,21 @@ const CommentItem = ({
               <div className="pl-8">
                 <CommentContent content={comment.content} images={type === "reply" ? undefined : comment.imgs} />
 
-                {/* {comment.is_edited && ( */}
                 <div className="w-full flex items-center gap-4 mt-5 pl-2">
                   <button
-                    onClick={handleLikeToggle}
-                    className={`flex items-center gap-1 text-xs ${isLiked ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
+                    onClick={() => handleApplyReact(comment.id, comment, 'like')}
+                    className={`flex items-center gap-1 text-xs ${comment.user_reaction === 'like' ? 'text-teal-400' : 'text-gray-400'} hover:text-teal-400 transition-colors`}
                   >
-                    <ThumbsUp className="h-4 w-4" fill={isLiked ? 'currentColor' : 'none'} />
-                    <span>{likeCount}</span>
+                    <ThumbsUp className="h-4 w-4" fill={comment.user_reaction === 'like' ? 'currentColor' : 'none'} />
+                    <span>{comment.total_likes}</span>
                   </button>
 
                   <button
-                    onClick={handleDislikeToggle}
-                    className={`flex items-center gap-1 text-xs ${isDisliked ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-600 transition-colors`}
+                    onClick={() => handleApplyReact(comment.id, comment, 'dislike')}
+                    className={`flex items-center gap-1 text-xs ${comment.user_reaction === 'dislike' ? 'text-gray-400' : 'text-gray-400'} hover:text-gray-600 transition-colors`}
                   >
-                    <ThumbsDown className="h-4 w-4" fill={isDisliked ? 'currentColor' : 'none'} />
-                    <span>{dislikeCount}</span>
+                    <ThumbsDown className="h-4 w-4" fill={comment.user_reaction === 'dislike' ? 'currentColor' : 'none'} />
+                    <span>{comment.total_dislikes}</span>
                   </button>
 
                   <button
@@ -286,7 +225,6 @@ const CommentItem = ({
                     Reply
                   </button>
                 </div>
-                {/* )} */}
 
                 {showReplyForm && (
                   <div className="mt-3 pl-2">

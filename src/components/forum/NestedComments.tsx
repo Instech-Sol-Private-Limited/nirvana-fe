@@ -88,9 +88,6 @@
 //     e.preventDefault();
 
 
-//     console.log(`Replying to comment ${comment.id}: ${replyText}`);
-
-
 //     setReplyText('');
 //     setShowReplyForm(false);
 //   };

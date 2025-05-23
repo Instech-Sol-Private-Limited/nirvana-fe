@@ -1,5 +1,5 @@
 // utils/badges.ts
-import  supabase from "@/config/supabse";
+import supabase from "@/config/supabse";
 
 export interface Badge {
   id: string;
@@ -19,7 +19,7 @@ export interface UserBadge extends Badge {
  * @param userId The user ID to fetch badges for
  * @returns An array of badges with their metadata
  */
-export async function getUserBadges(userId: string): Promise<{ 
+export async function getUserBadges(userId: string): Promise<{
   success: boolean;
   data: { badges: UserBadge[] };
   message?: string;
@@ -32,7 +32,7 @@ export async function getUserBadges(userId: string): Promise<{
         message: 'User ID is required'
       };
     }
-console.log('Fetching badges for user:', userId);
+
     const { data, error } = await supabase
       .from('user_badges')
       .select(`
@@ -50,21 +50,18 @@ console.log('Fetching badges for user:', userId);
     if (error) {
       throw error;
     }
-    console.log('Raw badges data:', JSON.stringify(data, null, 2));
 
-console.log('Badges data:', data);
-    
     const badges: UserBadge[] = (data ?? [])
-  .filter(item => !!item.badges) // keep items that have a badges object
-  .map(item => ({
-    id: item.badges.id,
-    name: item.badges.name,
-    description: item.badges.description,
-    icon: item.badges.icon,
-    color: item.badges.color,
-    background: item.badges.background,
-    earned_at: item.earned_at
-  }));
+      .filter(item => !!item.badges)
+      .map((item: any) => ({
+        id: item.badges.id,
+        name: item.badges.name,
+        description: item.badges.description,
+        icon: item.badges.icon,
+        color: item.badges.color,
+        background: item.badges.background,
+        earned_at: item.earned_at
+      }));
 
     return {
       success: true,
@@ -114,7 +111,7 @@ export async function assignBadgeToUser(userId: string, badgeName: string): Prom
   message?: string;
 }> {
   try {
-   
+
     const { data: badgeData, error: badgeError } = await supabase
       .from('badges')
       .select('id')
@@ -123,7 +120,7 @@ export async function assignBadgeToUser(userId: string, badgeName: string): Prom
 
     if (badgeError) throw badgeError;
 
-    
+
     const { data: existingBadge, error: existingBadgeError } = await supabase
       .from('user_badges')
       .select('id')

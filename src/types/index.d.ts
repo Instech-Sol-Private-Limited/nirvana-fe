@@ -11,6 +11,11 @@ export interface Thread {
   updated_at: string;
   total_likes: number;
   total_dislikes: number;
+  total_hearts: number;
+  total_insightfuls: number;
+  total_hugs: number;
+  total_comments: number;
+  user_reaction?: string | null;
   keywords: string[];
   is_active: boolean;
   profiles: {
