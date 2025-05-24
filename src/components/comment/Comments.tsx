@@ -192,6 +192,7 @@ export default function Comments({ threadId, threadsStats, fetchThreadDetails }:
               <ReplyList
                 parentId={comment.id}
                 fetchReplies={fetchReplies}
+                setReplies={setReplies}
                 replies={replies[comment.id] || []}
                 loading={replyLoading}
                 setLoading={setReplyLoading}

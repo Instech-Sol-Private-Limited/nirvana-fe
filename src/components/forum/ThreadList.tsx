@@ -15,6 +15,7 @@ import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { TbBulb, TbBulbFilled } from 'react-icons/tb';
 import { SiHuggingface } from 'react-icons/si';
+import AuthorizationModal from '../dialogs/AuthorizationModal';
 interface ThreadListProps {
   threads: Thread[];
   setThreads?: (value: any) => void;
@@ -24,6 +25,7 @@ interface ThreadListProps {
 
 const ThreadList: React.FC<ThreadListProps> = ({ threads, setThreads, isLoading = false, onNewThread }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedThread, setSelectedThread] = useState({});
   const router = useRouter();
@@ -74,8 +76,7 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, setThreads, isLoading 
   ) => {
     if (!setThreads) return;
     if (!userId) {
-      toast.error('Account is not logged in!');
-      router.push('/login');
+      setIsLoginOpen(true);
       return;
     }
 
@@ -341,6 +342,11 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, setThreads, isLoading 
           </div>
         ))}
       </div>
+
+      <AuthorizationModal
+        isOpen={isLoginOpen}
+        setIsOpen={setIsLoginOpen}
+      />
 
       <AddThreadModal
         isOpen={isOpen}

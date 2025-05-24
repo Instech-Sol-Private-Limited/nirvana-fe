@@ -16,6 +16,7 @@ import { Category, Thread } from '@/types';
 import { uploadToSupabase } from '@/utils/supabsethreadbucket';
 import { addNewThread, updateThread } from '@/utils/threads';
 import { toast } from 'react-toastify';
+import { LiaHashtagSolid } from 'react-icons/lia';
 
 interface AddThreadProps {
     isOpen: boolean;
@@ -311,7 +312,7 @@ const AddThreadModal: React.FC<AddThreadProps> = ({ isOpen, setIsOpen, onNewThre
                                         key={index}
                                         className="px-4 py-2 bg-gray-800 text-teal-400 rounded-full flex items-center border border-gray-700 hover:border-teal-500 transition-colors duration-300"
                                     >
-                                        <FaTag className="mr-2" />
+                                        <LiaHashtagSolid />
                                         {tag}
                                         <button
                                             type="button"
