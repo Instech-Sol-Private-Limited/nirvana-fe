@@ -119,10 +119,10 @@ const Navbar: React.FC = () => {
       </div>
 
       <div className="flex items-center md:gap-4 gap-2">
-        <button className="p-1 rounded-full text-gray-400 hover:text-white focus:outline-none relative">
+        {/* <button className="p-1 rounded-full text-gray-400 hover:text-white focus:outline-none relative">
           <FiBell className="md:w-6 md:h-6 w-5 h-5" />
           <span className="absolute top-0 right-0 block md:h-2 md:w-2 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-gray-900"></span>
-        </button>
+        </button> */}
 
         <div className="relative ml-2" ref={userMenuRef}>
           {loading ? (

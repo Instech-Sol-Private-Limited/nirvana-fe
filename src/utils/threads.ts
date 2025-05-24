@@ -35,7 +35,6 @@ interface UpdateReplyParams {
 const getAllThreads = async (limit: number, offset: number): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.get(`/threads/get-all-threads?limit=${limit}&offset=${offset}`);
-        console.log(response.data);
         return {
             success: true,
             data: response.data
@@ -52,6 +51,22 @@ const getAllThreads = async (limit: number, offset: number): Promise<ApiResponse
 const getThreadDetails = async (thread_id: string): Promise<ApiResponse<any>> => {
     try {
         const response = await apiClient.get(`/threads/get-thread-details/${thread_id}`);
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+        return {
+            success: false,
+            // @ts-ignore
+            message: error.message || 'An unexpected error occurred'
+        };
+    }
+};
+
+const getThreadsByUserId = async (userId: string, limit: number = 20, offset: number = 0): Promise<ApiResponse<any>> => {
+    try {
+        const response = await apiClient.get(`/threads/get-threads-by-user/${userId}?limit=${limit}&offset=${offset}`);
         return {
             success: true,
             data: response.data
@@ -128,40 +143,6 @@ const applyThreadReaction = async (thread_id: string, reactionType: 'like' | 'di
         };
     }
 };
-
-const getThreadReaction = async (thread_id: string) => {
-    try {
-        const response = await apiClient.get(`/threads/get-user-reaction/${thread_id}`);
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        return {
-            success: false,
-            // @ts-ignore
-            message: error.message || 'An unexpected error occurred'
-        };
-    }
-};
-
-const getAllReactionsByUser = async () => {
-    try {
-        const response = await apiClient.get(`/threads/get-all-user-reactions`);
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        return {
-            success: false,
-            // @ts-ignore
-            message: error.message || 'An unexpected error occurred'
-        };
-    }
-};
-
-
 
 
 // ===================== Threads Comments Utils =============================
@@ -249,24 +230,6 @@ const applyCommentReaction = async (comment_id: string, reactionType: 'like' | '
     }
 };
 
-const getCommentReactionsByThread = async (thread_id: string): Promise<ApiResponse<any>> => {
-    try {
-        const response = await apiClient.get(`/threads/get-all-comment-reaction/${thread_id}`);
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        return {
-            success: false,
-            // @ts-ignore
-            message: error.message || 'An unexpected error occurred'
-        };
-    }
-};
-
-
-
 
 // ===================== Comment's Replies Utils =============================
 
@@ -286,7 +249,6 @@ const getCommentReplies = async (comment_id: string): Promise<ApiResponse<any>> 
         };
     }
 };
-
 
 const addReply = async (params: AddReplyParams): Promise<ApiResponse<any>> => {
     try {
@@ -342,43 +304,11 @@ const deleteReply = async (comment_id: string): Promise<ApiResponse<any>> => {
     }
 };
 
-const updateReplyReaction = async (comment_id: string, reactionType: 'like' | 'dislike' | 'none'): Promise<ApiResponse<any>> => {
+const applyReplyReaction = async (reply_id: string, reactionType: 'like' | 'dislike' | 'none'): Promise<ApiResponse<any>> => {
     try {
-        const response = await apiClient.patch(`/threads/apply-reply-react/${comment_id}`, {
-            reaction_type: reactionType
+        const response = await apiClient.patch(`/threads/apply-reply-react/${reply_id}`, {
+            type: reactionType
         });
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        return {
-            success: false,
-            // @ts-ignore
-            message: error.message || 'An unexpected error occurred'
-        };
-    }
-};
-
-const getReplyReactions = async (comment_id: string): Promise<ApiResponse<any>> => {
-    try {
-        const response = await apiClient.get(`/threads/get-reply-reaction/${comment_id}`);
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        return {
-            success: false,
-            // @ts-ignore
-            message: error.message || 'An unexpected error occurred'
-        };
-    }
-};
-
-const getThreadsByUserId = async (userId: string, limit: number = 20, offset: number = 0): Promise<ApiResponse<any>> => {
-    try {
-        const response = await apiClient.get(`/threads/get-threads-by-user/${userId}?limit=${limit}&offset=${offset}`);
         return {
             success: true,
             data: response.data
@@ -402,8 +332,6 @@ export {
     deleteThread,
     updateThread,
     applyThreadReaction,
-    getThreadReaction,
-    getAllReactionsByUser,
 
     // Comment operations
     getThreadComments,
@@ -411,13 +339,11 @@ export {
     updateComment,
     deleteComment,
     applyCommentReaction,
-    getCommentReactionsByThread,
 
 
     getCommentReplies,
     addReply,
     updateReply,
     deleteReply,
-    updateReplyReaction,
-    getReplyReactions
+    applyReplyReaction,
 };

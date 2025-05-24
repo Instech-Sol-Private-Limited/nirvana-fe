@@ -3,19 +3,76 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import CommentItem from './CommentItem';
-import { updateReply, deleteReply } from '@/utils/threads';
+import { updateReply, deleteReply, applyReplyReaction } from '@/utils/threads';
 import { Reply } from '@/types';
+import { useAuth } from '@/context/AuthProvider';
 
 interface ReplyListProps {
   parentId: string;
   fetchReplies: (parentId: string) => void;
+  setReplies: React.Dispatch<React.SetStateAction<Record<string, Reply[]>>>;
   replies: Reply[];
   loading: boolean;
-  setLoading: (value: boolean) => void
+  setLoading: (value: boolean) => void;
 }
 
-const ReplyList = ({ parentId, fetchReplies, replies, loading, setLoading }: ReplyListProps) => {
+const ReplyList = ({ parentId, fetchReplies, setReplies, replies, loading, setLoading }: ReplyListProps) => {
   const [visibleReplies, setVisibleReplies] = useState(2);
+  const { userId } = useAuth();
+
+  const handleApplyReact = async (
+    replyId: string,
+    reply: Reply,
+    type: 'like' | 'dislike'
+  ) => {
+    if (!userId) return;
+
+    setReplies((prevReplies) => {
+      const parentReplies = prevReplies[parentId] || [];
+      const updatedReplies = parentReplies.map((t) => {
+        if (t.id !== reply.id) return t;
+
+        const newReaction = t.user_reaction === type ? null : type;
+
+        const reactionFields = {
+          like: 'total_likes',
+          dislike: 'total_dislikes',
+        } as const;
+
+        type ReactionType = keyof typeof reactionFields;
+        type FieldMap = Record<typeof reactionFields[ReactionType], number>;
+
+        const updatedCounts: FieldMap = {
+          total_likes: t.total_likes,
+          total_dislikes: t.total_dislikes,
+        };
+
+        if (t.user_reaction) {
+          const prevField = reactionFields[t.user_reaction as ReactionType];
+          updatedCounts[prevField] = Math.max(0, updatedCounts[prevField] - 1);
+        }
+
+        if (newReaction) {
+          const newField = reactionFields[newReaction as ReactionType];
+          updatedCounts[newField]++;
+        }
+
+        return {
+          ...t,
+          user_reaction: newReaction,
+          ...updatedCounts,
+        };
+      });
+
+      return {
+        ...prevReplies,
+        [parentId]: updatedReplies,
+      };
+    });
+
+
+    await applyReplyReaction(replyId, type);
+  };
 
   const handleUpdateReply = async (data: { comment_id: string; content: string; imgs?: (string | undefined)[] }) => {
     try {
@@ -87,7 +144,9 @@ const ReplyList = ({ parentId, fetchReplies, replies, loading, setLoading }: Rep
           type="reply"
           reply_to={reply.user_name}
           comment={reply}
-          handleApplyReact={() => { }}
+          handleApplyReact={(parentId, comment, type) =>
+            handleApplyReact(parentId, comment as Reply, type)
+          }
           parentId={parentId}
           fetchReplies={fetchReplies}
           onUpdate={handleUpdateReply}

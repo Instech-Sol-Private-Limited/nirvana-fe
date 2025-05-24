@@ -41,7 +41,6 @@ export async function getTrendingTopics(): Promise<{
     const trendingTags: TagCount[] = Object.entries(keywordCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10); 
 
     return {
       success: true,
